@@ -407,6 +407,7 @@ exports.uploadLogs = async (req, res) => {
                 lead_type = 'TRANSFERRED';
               }
             }
+
           }
         }
       }

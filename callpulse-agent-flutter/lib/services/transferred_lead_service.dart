@@ -18,12 +18,14 @@ class TransferredLeadService {
 
       final json = response.data;
       final data = json['data'] ?? json;
-      List<dynamic> leadsJson = data['leads'] ?? [];
+      List<dynamic> leadsJson = [];
       
       if (json is List) {
         leadsJson = json;
       } else if (data is List) {
         leadsJson = data;
+      } else if (data is Map && data['leads'] != null) {
+        leadsJson = data['leads'];
       }
       
       debugPrint('[TransferredLeads] parsed leads count: ${leadsJson.length}');

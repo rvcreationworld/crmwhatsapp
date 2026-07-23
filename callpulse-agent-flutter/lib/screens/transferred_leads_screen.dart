@@ -15,7 +15,7 @@ class TransferredLeadsScreen extends StatefulWidget {
 }
 
 class _TransferredLeadsScreenState extends State<TransferredLeadsScreen> {
-  final TransferredLeadService _directLeadService = TransferredLeadService();
+  final TransferredLeadService _transferredLeadService = TransferredLeadService();
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -33,7 +33,7 @@ class _TransferredLeadsScreenState extends State<TransferredLeadsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDirectLeads();
+    _loadTransferredLeads();
   }
 
   @override
@@ -42,13 +42,13 @@ class _TransferredLeadsScreenState extends State<TransferredLeadsScreen> {
     super.dispose();
   }
 
-  Future<void> _loadDirectLeads() async {
+  Future<void> _loadTransferredLeads() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
-    final res = await _directLeadService.getTransferredLeads();
+    final res = await _transferredLeadService.getTransferredLeads();
     if (!mounted) return;
 
     if (res['success'] == true) {
@@ -81,7 +81,7 @@ class _TransferredLeadsScreenState extends State<TransferredLeadsScreen> {
     final remark = _remarkControllers[leadId]?.text.trim() ?? '';
     setState(() => _isSavingMap[leadId] = true);
 
-    final res = await _directLeadService.updateTransferredLeadStatus4(leadId, status4, remark);
+    final res = await _transferredLeadService.updateTransferredLeadStatus4(leadId, status4, remark);
     if (!mounted) return;
     setState(() => _isSavingMap[leadId] = false);
 
@@ -114,11 +114,11 @@ class _TransferredLeadsScreenState extends State<TransferredLeadsScreen> {
     }
 
     if (_errorMessage != null) {
-      return ErrorState(message: _errorMessage!, onRetry: _loadDirectLeads);
+      return ErrorState(message: _errorMessage!, onRetry: _loadTransferredLeads);
     }
 
     return RefreshIndicator(
-      onRefresh: _loadDirectLeads,
+      onRefresh: _loadTransferredLeads,
       color: AppColors.primaryLight,
       backgroundColor: AppColors.bgCard,
       child: _leads.isEmpty
@@ -129,7 +129,7 @@ class _TransferredLeadsScreenState extends State<TransferredLeadsScreen> {
                 const EmptyState(
                   icon: Icons.inbox_rounded,
                   message: 'No Fresh Transferred Leads',
-                  subtitle: 'All your direct leads have been worked or there are none assigned.',
+                  subtitle: 'All your transferred leads have been worked or there are none assigned.',
                 ),
               ],
             )
@@ -164,7 +164,7 @@ class _TransferredLeadsScreenState extends State<TransferredLeadsScreen> {
                           const SizedBox(height: 4),
                           Text('${_leads.length} Leads', style: const TextStyle(color: AppColors.textPrimary, fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
                         ])),
-                        IconButton(icon: const Icon(Icons.refresh_rounded, color: AppColors.textMuted), onPressed: _loadDirectLeads),
+                        IconButton(icon: const Icon(Icons.refresh_rounded, color: AppColors.textMuted), onPressed: _loadTransferredLeads),
                       ]),
                     ),
                   );
@@ -184,7 +184,7 @@ class _TransferredLeadsScreenState extends State<TransferredLeadsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                          StatusBadge.directLead(),
+                          StatusBadge.transferredLead(),
                           isCalled ? StatusBadge.called() : StatusBadge.notCalled(),
                         ]),
                         const SizedBox(height: 16),

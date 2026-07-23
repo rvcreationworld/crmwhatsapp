@@ -61,6 +61,12 @@ class StatusBadge extends StatelessWidget {
         color: AppColors.secondary,
       );
 
+  factory StatusBadge.transferredLead() => const StatusBadge(
+        label: 'TRANSFERRED',
+        icon: Icons.forward_to_inbox_rounded,
+        color: AppColors.primary,
+      );
+
   factory StatusBadge.freeLead() => const StatusBadge(
         label: 'FREE LEAD',
         icon: Icons.redeem_rounded,
