@@ -1,0 +1,28 @@
+node_modules/
+dist/
+build/
+.env
+.env.*
+uploads/
+logs/
+*.log
+coverage/
+.cache/
+.vscode/
+.idea/
+.DS_Store
+
+# Flutter / Dart ignores
+.dart_tool/
+.pub-cache/
+.packages
+
+# Exception to explicitly NOT ignore certain files/directories
+!package.json
+!package-lock.json
+!vite.config.js
+!src/
+!public/
+!backend/
+!frontend/
+!README.md

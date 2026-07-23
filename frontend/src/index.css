@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+
+  --color-sidebar-bg: #1e1e2f;
+  --color-sidebar-hover: #2d2d44;
+  --color-sidebar-text: #e2e8f0;
+
+  /* Performant Animations */
+  --animate-fade-in: fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-fade-in-up: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-zoom-in: zoom-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-pulse-soft: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes fade-in-up {
+    0% { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes zoom-in {
+    0% { opacity: 0; transform: scale(0.96) translateY(8px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 dark:bg-[#0f172a] dark:text-slate-100 antialiased selection:bg-indigo-500/30 selection:text-indigo-900 dark:selection:text-indigo-100;
+    font-family: var(--font-sans);
+    margin: 0;
+  }
+
+  /* Smooth Custom Scrollbar Globally */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-slate-700 rounded-full hover:bg-slate-400 dark:hover:bg-slate-600 transition-colors;
+  }
+}
+
+@layer utilities {
+  .call-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    vertical-align: middle;
+  }
+
+  .call-dot-empty {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+  }
+
+  .call-dot-red {
+    background: rgba(255, 70, 70, 0.35);
+    box-shadow: 0 0 4px rgba(255, 70, 70, 0.25);
+  }
+
+  .call-dot-blue-1 {
+    background: rgba(59, 130, 246, 0.25);
+    box-shadow: 0 0 4px rgba(59, 130, 246, 0.18);
+  }
+
+  .call-dot-blue-2 {
+    background: rgba(59, 130, 246, 0.55);
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.35);
+  }
+
+  .call-dot-blue-3 {
+    background: rgba(30, 64, 175, 0.95);
+    box-shadow: 0 0 6px rgba(30, 64, 175, 0.65);
+  }
+}
+
+.call-dot-green {
+  background: rgba(34, 197, 94, 0.85);
+  box-shadow: 0 0 5px rgba(34, 197, 94, 0.45);
+}

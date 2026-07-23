@@ -1,0 +1,18 @@
+const mysql = require('mysql2/promise');
+require('dotenv').config();
+
+async function run() {
+  const conn = await mysql.createConnection({
+    host: '82.25.108.74', user: 'shareMaster', password: 'Share@2025', database: 'crmpro_v2_whatsapp_test'
+  });
+  
+  try {
+    const [rows] = await conn.query("SHOW COLUMNS FROM telecaller_master");
+    console.log(rows.map(r => r.Field));
+  } catch(e) {
+    console.log("Error:", e.message);
+  }
+
+  await conn.end();
+}
+run();

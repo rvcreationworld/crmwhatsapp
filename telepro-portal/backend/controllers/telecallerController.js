@@ -1,0 +1,195 @@
+const db = require("../config/db");
+const bcrypt = require("bcrypt");
+
+exports.getAll = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = (page - 1) * limit;
+
+    const [countResult] = await db.query("SELECT COUNT(*) as count FROM telecaller_master WHERE is_deleted = 0");
+    const totalCount = countResult[0].count;
+
+    const [rows] = await db.query(
+      "SELECT id, telecaller_name, tele_mobile, telegram_user_id, is_active, own_campaign_enabled, created_at, phone_last10, last_verified FROM telecaller_master WHERE is_deleted = 0 ORDER BY CAST(SUBSTRING(SUBSTRING_INDEX(telecaller_name, ' ', 1), 2) AS UNSIGNED) ASC LIMIT ? OFFSET ?",
+      [limit, offset]
+    );
+
+    res.json({
+      data: rows,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page
+    });
+  } catch (error) {
+    console.error("getAll telecallers error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.create = async (req, res) => {
+  try {
+    const { telecaller_name, tele_mobile, password, is_active, own_campaign_enabled } = req.body;
+
+    if (!telecaller_name || !tele_mobile || !password) {
+      return res.status(400).json({ success: false, message: "Name, mobile, and password are required." });
+    }
+
+    if (own_campaign_enabled === 1) {
+      return res.status(400).json({ success: false, message: "Cannot enable Personal Meta Campaign Leads during creation. Please add the telecaller, link a campaign sheet in the Meta Campaigns tab, and then enable this setting." });
+    }
+
+    const digitsOnly = tele_mobile.replace(/\D/g, '');
+    const phone_last10 = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : digitsOnly;
+
+    // Check for duplicate
+    const [existing] = await db.query(
+      "SELECT id, is_deleted FROM telecaller_master WHERE tele_mobile = ? OR phone_last10 = ?",
+      [tele_mobile, phone_last10]
+    );
+
+    let password_hash = password;
+    if (!password.startsWith("$2a$") && !password.startsWith("$2b$") && !password.startsWith("$2y$")) {
+      password_hash = await bcrypt.hash(password, 10);
+    }
+    const active_status = is_active === undefined ? 1 : is_active;
+    const own_campaign = own_campaign_enabled || 0;
+
+    if (existing.length > 0) {
+      const existingUser = existing[0];
+      if (existingUser.is_deleted === 0) {
+        return res.status(400).json({ success: false, message: "Telecaller with this mobile number already exists." });
+      } else {
+        // Restore deleted user
+        await db.query(
+          `UPDATE telecaller_master 
+           SET telecaller_name = ?, tele_mobile = ?, password_hash = ?, is_active = ?, is_deleted = 0, own_campaign_enabled = COALESCE(own_campaign_enabled, 0) 
+           WHERE id = ?`,
+          [telecaller_name, tele_mobile, password_hash, active_status, existingUser.id]
+        );
+        return res.status(200).json({ success: true, message: "Telecaller created successfully", id: existingUser.id });
+      }
+    }
+
+    // Insert new
+    const [result] = await db.query(
+      "INSERT INTO telecaller_master (telecaller_name, tele_mobile, password_hash, is_active, own_campaign_enabled, is_deleted) VALUES (?, ?, ?, ?, ?, 0)",
+      [telecaller_name, tele_mobile, password_hash, active_status, own_campaign]
+    );
+
+    res.status(201).json({ success: true, message: "Telecaller created successfully", id: result.insertId });
+  } catch (error) {
+    console.error("CREATE TELECALLER ERROR:", error);
+    res.status(500).json({ success: false, message: "Failed to create telecaller", error: "Internal server error." });
+  }
+};
+
+exports.update = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { telecaller_name, is_active, own_campaign_enabled, is_deleted, password } = req.body;
+
+    if (own_campaign_enabled === 1) {
+      const [campaigns] = await db.query("SELECT id FROM telecaller_campaigns WHERE telecaller_id = ? AND sheet_url IS NOT NULL", [id]);
+      if (campaigns.length === 0) {
+        return res.status(400).json({ message: "Cannot enable Personal Meta Campaign Leads. This telecaller does not have a linked sheet in the Meta Campaigns tab." });
+      }
+    }
+
+    if (is_deleted === 1 || is_deleted === true) {
+      // Check for active leads across 4 tables
+      const [wsActive] = await db.query(
+        `SELECT id FROM working_sheet 
+         WHERE telecaller_id = ? 
+         AND (is_closed_lead = 0 OR is_closed_lead IS NULL)
+         AND (is_transferred_lead = 0 OR is_transferred_lead IS NULL)
+         AND (is_released_to_free_pool = 0 OR is_released_to_free_pool IS NULL)
+         AND (is_kyc_done = 0 OR is_kyc_done IS NULL)
+         LIMIT 1`, [id]
+      );
+
+      const [dlActive] = await db.query(
+        `SELECT id FROM direct_leads 
+         WHERE telecaller_id = ? 
+         AND (is_closed_lead = 0 OR is_closed_lead IS NULL)
+         AND (is_transferred_lead = 0 OR is_transferred_lead IS NULL)
+         AND (is_released_to_free_pool = 0 OR is_released_to_free_pool IS NULL)
+         AND (is_kyc_done = 0 OR is_kyc_done IS NULL)
+         LIMIT 1`, [id]
+      );
+
+      const [flActive] = await db.query(
+        `SELECT id FROM free_leads 
+         WHERE current_telecaller_id = ? 
+         AND (is_closed_lead = 0 OR is_closed_lead IS NULL)
+         AND (is_transferred_lead = 0 OR is_transferred_lead IS NULL)
+         AND free_status IN ('ASSIGNED', 'COMPLETED')
+         LIMIT 1`, [id]
+      );
+
+      const [tlActive] = await db.query(
+        `SELECT id FROM transferred_leads 
+         WHERE current_telecaller_id = ? 
+         AND (is_closed_lead = 0 OR is_closed_lead IS NULL)
+         AND (is_released_to_free_pool = 0 OR is_released_to_free_pool IS NULL)
+         AND transfer_status IN ('ASSIGNED', 'COMPLETED')
+         LIMIT 1`, [id]
+      );
+
+      if (wsActive.length > 0 || dlActive.length > 0 || flActive.length > 0 || tlActive.length > 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "This telecaller has active leads. Transfer all leads before deleting." 
+        });
+      }
+    }
+
+    let query = "UPDATE telecaller_master SET telecaller_name = COALESCE(?, telecaller_name), is_active = COALESCE(?, is_active), own_campaign_enabled = COALESCE(?, own_campaign_enabled), is_deleted = COALESCE(?, is_deleted)";
+    let params = [telecaller_name, is_active, own_campaign_enabled, is_deleted];
+
+    if (password && password.trim() !== "") {
+      let password_hash = password.trim();
+      if (!password_hash.startsWith("$2a$") && !password_hash.startsWith("$2b$") && !password_hash.startsWith("$2y$")) {
+        password_hash = await bcrypt.hash(password_hash, 10);
+      }
+      query += ", password_hash = ?";
+      params.push(password_hash);
+    }
+
+    query += " WHERE id = ?";
+    params.push(id);
+
+    await db.query(query, params);
+
+    res.json({ message: "Telecaller updated successfully" });
+  } catch (error) {
+    console.error("update telecaller error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { newPassword } = req.body;
+
+    if (!newPassword) {
+      return res.status(400).json({ message: "New password is required" });
+    }
+
+    let password_hash = newPassword.trim();
+    if (!password_hash.startsWith("$2a$") && !password_hash.startsWith("$2b$") && !password_hash.startsWith("$2y$")) {
+      password_hash = await bcrypt.hash(password_hash, 10);
+    }
+
+    await db.query(
+      "UPDATE telecaller_master SET password_hash = ? WHERE id = ?",
+      [password_hash, id]
+    );
+
+    res.json({ message: "Password reset successfully" });
+  } catch (error) {
+    console.error("reset password error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
