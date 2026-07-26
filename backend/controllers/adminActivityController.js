@@ -10,6 +10,29 @@ function formatGapLabel(seconds) {
 
 exports.getLastActivity = async (req, res) => {
   try {
+    const nowIst = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    const todayStr = `${nowIst.getFullYear()}-${String(nowIst.getMonth() + 1).padStart(2, '0')}-${String(nowIst.getDate()).padStart(2, '0')}`;
+
+    const ringingCondition = `(
+      (status3 = 'Ringing') OR 
+      ((status3 IS NULL OR status3 = 'None' OR status3 = '') AND status2 = 'Ringing') OR 
+      ((status3 IS NULL OR status3 = 'None' OR status3 = '') AND (status2 IS NULL OR status2 = 'None' OR status2 = '') AND status1 = 'Ringing')
+    )
+    AND DATE(CONVERT_TZ(created_at, '+00:00', '+05:30')) < '${todayStr}'
+    AND (status1_timestamp IS NULL OR DATE(CONVERT_TZ(status1_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+    AND (status2_timestamp IS NULL OR DATE(CONVERT_TZ(status2_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+    AND (status3_timestamp IS NULL OR DATE(CONVERT_TZ(status3_timestamp, '+00:00', '+05:30')) < '${todayStr}')`;
+
+    const callbackCondition = `(
+      (status3 = 'Call Back') OR 
+      ((status3 IS NULL OR status3 = 'None' OR status3 = '') AND status2 = 'Call Back') OR 
+      ((status3 IS NULL OR status3 = 'None' OR status3 = '') AND (status2 IS NULL OR status2 = 'None' OR status2 = '') AND status1 = 'Call Back')
+    )
+    AND DATE(CONVERT_TZ(created_at, '+00:00', '+05:30')) < '${todayStr}'
+    AND (status1_timestamp IS NULL OR DATE(CONVERT_TZ(status1_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+    AND (status2_timestamp IS NULL OR DATE(CONVERT_TZ(status2_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+    AND (status3_timestamp IS NULL OR DATE(CONVERT_TZ(status3_timestamp, '+00:00', '+05:30')) < '${todayStr}')`;
+
     const query = `
       SELECT 
         t.id AS telecaller_id, 
@@ -59,6 +82,16 @@ exports.getLastActivity = async (req, res) => {
                 )
             ) */
         ) AS untouched_bot_lead_count,
+        (
+          (SELECT COUNT(*) FROM direct_leads dl WHERE dl.telecaller_id = t.id AND (dl.is_kyc_done = 0 OR dl.is_kyc_done IS NULL) AND (dl.is_released_to_free_pool = 0 OR dl.is_released_to_free_pool IS NULL) AND (dl.is_closed_lead = 0 OR dl.is_closed_lead IS NULL) AND (dl.is_transferred_lead = 0 OR dl.is_transferred_lead IS NULL) AND ${ringingCondition})
+          +
+          (SELECT COUNT(*) FROM working_sheet wl WHERE wl.telecaller_id = t.id AND (wl.is_kyc_done = 0 OR wl.is_kyc_done IS NULL) AND (wl.is_released_to_free_pool = 0 OR wl.is_released_to_free_pool IS NULL) AND (wl.is_closed_lead = 0 OR wl.is_closed_lead IS NULL) AND (wl.is_transferred_lead = 0 OR wl.is_transferred_lead IS NULL) AND ${ringingCondition})
+        ) AS ringing_leads_count,
+        (
+          (SELECT COUNT(*) FROM direct_leads dl WHERE dl.telecaller_id = t.id AND (dl.is_kyc_done = 0 OR dl.is_kyc_done IS NULL) AND (dl.is_released_to_free_pool = 0 OR dl.is_released_to_free_pool IS NULL) AND (dl.is_closed_lead = 0 OR dl.is_closed_lead IS NULL) AND (dl.is_transferred_lead = 0 OR dl.is_transferred_lead IS NULL) AND ${callbackCondition})
+          +
+          (SELECT COUNT(*) FROM working_sheet wl WHERE wl.telecaller_id = t.id AND (wl.is_kyc_done = 0 OR wl.is_kyc_done IS NULL) AND (wl.is_released_to_free_pool = 0 OR wl.is_released_to_free_pool IS NULL) AND (wl.is_closed_lead = 0 OR wl.is_closed_lead IS NULL) AND (wl.is_transferred_lead = 0 OR wl.is_transferred_lead IS NULL) AND ${callbackCondition})
+        ) AS callback_leads_count,
         MAX(ccl.call_started_at) AS last_call_at,
         COUNT(ccl.id) AS total_calls,
         TIMESTAMPDIFF(SECOND, MAX(ccl.call_started_at), UTC_TIMESTAMP()) AS last_call_gap_seconds

@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Users, UserSquare2, FileText, Database, BarChart3, Menu, Settings, Moon, Sun, Bell, Search, ChevronLeft, ChevronRight, Target, PhoneCall, History, TrendingUp, UploadCloud, UserCheck, Activity, Calendar, Archive, ArrowRightLeft, Megaphone, ChevronDown, Shield, MessageCircle, ListTodo, Inbox, LayoutTemplate, Image as ImageIcon, Repeat } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, UserSquare2, FileText, Database, BarChart3, Menu, Settings, Moon, Sun, Bell, Search, ChevronLeft, ChevronRight, Target, PhoneCall, History, TrendingUp, UploadCloud, UserCheck, Activity, Calendar, Archive, ArrowRightLeft, Megaphone, ChevronDown, Shield, MessageCircle, ListTodo, Inbox, LayoutTemplate, Image as ImageIcon, Repeat, Percent } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { cn } from '../components/ui/Skeleton';
@@ -23,6 +23,9 @@ const DashboardLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [adminControlsOpen, setAdminControlsOpen] = useState(false);
   const [whatsappControlOpen, setWhatsappControlOpen] = useState(false);
+  const [untouchedLeadsOpen, setUntouchedLeadsOpen] = useState(false);
+  const [followUpLeadsOpen, setFollowUpLeadsOpen] = useState(false);
+  const [myClientsOpen, setMyClientsOpen] = useState(false);
 
   // Close sidebar on mobile when route changes
   useEffect(() => {
@@ -82,10 +85,26 @@ const DashboardLayout = () => {
     { name: 'Settings', path: '/admin/whatsapp-center?tab=settings', icon: <Settings size={20} /> },
   ];
 
-  const telecallerLinks = [
+  const telecallerTopLinks = [
     { name: 'Dashboard', path: '/telecaller', icon: <LayoutDashboard size={20} /> },
-    { name: 'Untouched Direct Leads', path: '/telecaller/untouched-leads', icon: <Target size={20} /> },
-    { name: 'Untouched Bot Leads', path: '/telecaller/untouched-bot-leads', icon: <Target size={20} /> },
+  ];
+
+  const telecallerUntouchedLinks = [
+    { name: 'Untouched Direct', path: '/telecaller/untouched-leads', icon: <Target size={20} /> },
+    { name: 'Untouched Bot', path: '/telecaller/untouched-bot-leads', icon: <Target size={20} /> },
+  ];
+
+  const telecallerFollowUpLinks = [
+    { name: 'Ringing Leads', path: '/telecaller/leads/ringing', icon: <PhoneCall size={20} /> },
+    { name: 'Call Back Leads', path: '/telecaller/leads/callback', icon: <PhoneCall size={20} /> },
+  ];
+
+  const telecallerMyClientLinks = [
+    { name: 'My Angel Clients', path: '/telecaller/my-clients', icon: <UserCheck size={20} /> },
+    { name: 'My Dhan Clients', path: '/telecaller/my-dhan-clients', icon: <UserCheck size={20} /> },
+  ];
+
+  const telecallerBottomLinks = [
     { name: 'Fetch Bot Lead', path: '/telecaller/bot-pool', icon: <Database size={20} /> },
     { name: 'Fetch Free Lead', path: '/telecaller/fetch-free-lead', icon: <Database size={20} /> },
     { name: 'Current Leads', path: '/telecaller/leads/current', icon: <UserSquare2 size={20} /> },
@@ -94,7 +113,6 @@ const DashboardLayout = () => {
     { name: 'Ready to KYC', path: '/telecaller/leads/kyc', icon: <FileText size={20} /> },
     { name: 'Analytics', path: '/telecaller/analytics', icon: <BarChart3 size={20} /> },
     { name: 'Call Stats', path: '/telecaller/callpulse', icon: <PhoneCall size={20} /> },
-    { name: 'My Clients', path: '/telecaller/my-clients', icon: <UserCheck size={20} /> },
   ];
 
   const renderLink = (link, isSubmenu = false) => {
@@ -254,9 +272,101 @@ const DashboardLayout = () => {
                 
                 {whatsappControlOpen && !sidebarCollapsed && whatsappControlLinks.map(link => renderLink(link, true))}
                 {whatsappControlOpen && sidebarCollapsed && whatsappControlLinks.map(link => renderLink(link, false))}
+
+                <li className="pt-2 mt-2 border-t border-white/5"></li>
+                {renderLink({ name: 'Net Conversion', path: '/admin/net-conversion', icon: <Percent size={20} /> })}
               </>
             ) : (
-              telecallerLinks.map(link => renderLink(link))
+              <>
+                {telecallerTopLinks.map(link => renderLink(link))}
+                
+                <li className="pt-2 mt-2 border-t border-white/5">
+                  <button
+                    onClick={() => {
+                      if (sidebarCollapsed) setSidebarCollapsed(false);
+                      setUntouchedLeadsOpen(!untouchedLeadsOpen);
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 w-full rounded-lg transition-all duration-200 group relative text-left",
+                      sidebarCollapsed ? "justify-center p-3" : "px-3 py-2.5",
+                      "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                    )}
+                    title={sidebarCollapsed ? "Untouched Leads" : undefined}
+                  >
+                    <div className="transition-transform duration-200 group-hover:scale-110 shrink-0 text-purple-500/80 group-hover:text-purple-400">
+                      <Target size={20} />
+                    </div>
+                    {!sidebarCollapsed && (
+                      <>
+                        <span className="truncate flex-1 font-semibold text-sm tracking-wide text-slate-300">Untouched Leads</span>
+                        <ChevronDown size={16} className={cn("transition-transform duration-200", untouchedLeadsOpen ? "rotate-180" : "")} />
+                      </>
+                    )}
+                  </button>
+                </li>
+                
+                {untouchedLeadsOpen && !sidebarCollapsed && telecallerUntouchedLinks.map(link => renderLink(link, true))}
+                {untouchedLeadsOpen && sidebarCollapsed && telecallerUntouchedLinks.map(link => renderLink(link, false))}
+
+                <li className="pt-2 mt-2 border-t border-white/5">
+                  <button
+                    onClick={() => {
+                      if (sidebarCollapsed) setSidebarCollapsed(false);
+                      setFollowUpLeadsOpen(!followUpLeadsOpen);
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 w-full rounded-lg transition-all duration-200 group relative text-left",
+                      sidebarCollapsed ? "justify-center p-3" : "px-3 py-2.5",
+                      "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                    )}
+                    title={sidebarCollapsed ? "Follow Up Leads" : undefined}
+                  >
+                    <div className="transition-transform duration-200 group-hover:scale-110 shrink-0 text-amber-500/80 group-hover:text-amber-400">
+                      <PhoneCall size={20} />
+                    </div>
+                    {!sidebarCollapsed && (
+                      <>
+                        <span className="truncate flex-1 font-semibold text-sm tracking-wide text-slate-300">Follow Up Leads</span>
+                        <ChevronDown size={16} className={cn("transition-transform duration-200", followUpLeadsOpen ? "rotate-180" : "")} />
+                      </>
+                    )}
+                  </button>
+                </li>
+                
+                {followUpLeadsOpen && !sidebarCollapsed && telecallerFollowUpLinks.map(link => renderLink(link, true))}
+                {followUpLeadsOpen && sidebarCollapsed && telecallerFollowUpLinks.map(link => renderLink(link, false))}
+
+                <li className="pt-2 mt-2 border-t border-white/5">
+                  <button
+                    onClick={() => {
+                      if (sidebarCollapsed) setSidebarCollapsed(false);
+                      setMyClientsOpen(!myClientsOpen);
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 w-full rounded-lg transition-all duration-200 group relative text-left",
+                      sidebarCollapsed ? "justify-center p-3" : "px-3 py-2.5",
+                      "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                    )}
+                    title={sidebarCollapsed ? "My Clients" : undefined}
+                  >
+                    <div className="transition-transform duration-200 group-hover:scale-110 shrink-0 text-cyan-500/80 group-hover:text-cyan-400">
+                      <UserCheck size={20} />
+                    </div>
+                    {!sidebarCollapsed && (
+                      <>
+                        <span className="truncate flex-1 font-semibold text-sm tracking-wide text-slate-300">My Clients</span>
+                        <ChevronDown size={16} className={cn("transition-transform duration-200", myClientsOpen ? "rotate-180" : "")} />
+                      </>
+                    )}
+                  </button>
+                </li>
+                
+                {myClientsOpen && !sidebarCollapsed && telecallerMyClientLinks.map(link => renderLink(link, true))}
+                {myClientsOpen && sidebarCollapsed && telecallerMyClientLinks.map(link => renderLink(link, false))}
+
+                <li className="pt-2 mt-2 border-t border-white/5"></li>
+                {telecallerBottomLinks.map(link => renderLink(link))}
+              </>
             )}
           </ul>
         </nav>

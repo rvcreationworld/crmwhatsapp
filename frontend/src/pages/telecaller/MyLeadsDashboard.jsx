@@ -109,6 +109,8 @@ const MyLeadsDashboard = () => {
           {period === 'past' && 'Past Month Leads'}
           {period === 'old' && 'Old Leads'}
           {period === 'kyc' && 'Ready to KYC Leads'}
+          {period === 'ringing' && 'Ringing Leads'}
+          {period === 'callback' && 'Call Back Leads'}
         </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-2">Manage your pipeline efficiently.</p>
       </div>
@@ -266,6 +268,49 @@ const MyLeadsDashboard = () => {
         </div>
       )}
 
+      {/* Ringing Leads */}
+      {period === 'ringing' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {renderCard(
+            "Bot Leads",
+            summary.ringing.bot,
+            <Bot size={24} />,
+            botColor,
+            `/telecaller/leads/list/ringing/bot`,
+            "Leads pending follow-up"
+          )}
+          {hasCampaignsEnabled && renderCard(
+            "Direct Leads (Campaigns)",
+            summary.ringing.direct,
+            <Target size={24} />,
+            directColor,
+            `/telecaller/leads/list/ringing/direct`,
+            "Leads pending follow-up"
+          )}
+        </div>
+      )}
+
+      {/* Call Back Leads */}
+      {period === 'callback' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {renderCard(
+            "Bot Leads",
+            summary.callback?.bot || 0,
+            <Bot size={24} />,
+            botColor,
+            `/telecaller/leads/list/callback/bot`,
+            "Leads pending follow-up"
+          )}
+          {hasCampaignsEnabled && renderCard(
+            "Direct Leads (Campaigns)",
+            summary.callback?.direct || 0,
+            <Target size={24} />,
+            directColor,
+            `/telecaller/leads/list/callback/direct`,
+            "Leads pending follow-up"
+          )}
+        </div>
+      )}
     </div>
   );
 };

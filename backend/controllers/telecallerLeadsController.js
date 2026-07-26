@@ -139,6 +139,52 @@ exports.getSummary = async (req, res) => {
       [telecallerId]
     );
 
+    // Use IST timezone for "today" to accurately exclude leads updated today in India
+    const nowIst = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    const todayStr = `${nowIst.getFullYear()}-${String(nowIst.getMonth() + 1).padStart(2, '0')}-${String(nowIst.getDate()).padStart(2, '0')}`;
+
+    const ringingCondition = `(
+      (status3 = 'Ringing')
+      OR 
+      ((status3 IS NULL OR status3 = 'None' OR status3 = '') AND status2 = 'Ringing')
+      OR 
+      ((status3 IS NULL OR status3 = 'None' OR status3 = '') AND (status2 IS NULL OR status2 = 'None' OR status2 = '') AND status1 = 'Ringing')
+    )
+    AND DATE(CONVERT_TZ(created_at, '+00:00', '+05:30')) < '${todayStr}'
+    AND (status1_timestamp IS NULL OR DATE(CONVERT_TZ(status1_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+    AND (status2_timestamp IS NULL OR DATE(CONVERT_TZ(status2_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+    AND (status3_timestamp IS NULL OR DATE(CONVERT_TZ(status3_timestamp, '+00:00', '+05:30')) < '${todayStr}')`;
+
+    const callbackCondition = `(
+      (status3 = 'Call Back')
+      OR 
+      ((status3 IS NULL OR status3 = 'None' OR status3 = '') AND status2 = 'Call Back')
+      OR 
+      ((status3 IS NULL OR status3 = 'None' OR status3 = '') AND (status2 IS NULL OR status2 = 'None' OR status2 = '') AND status1 = 'Call Back')
+    )
+    AND DATE(CONVERT_TZ(created_at, '+00:00', '+05:30')) < '${todayStr}'
+    AND (status1_timestamp IS NULL OR DATE(CONVERT_TZ(status1_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+    AND (status2_timestamp IS NULL OR DATE(CONVERT_TZ(status2_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+    AND (status3_timestamp IS NULL OR DATE(CONVERT_TZ(status3_timestamp, '+00:00', '+05:30')) < '${todayStr}')`;
+
+    const [ringingBotRows] = await db.execute(
+      `SELECT COUNT(*) as count FROM working_sheet WHERE telecaller_id = ? AND (is_kyc_done = 0 OR is_kyc_done IS NULL) AND (is_released_to_free_pool = 0 OR is_released_to_free_pool IS NULL) AND (is_closed_lead = 0 OR is_closed_lead IS NULL) AND (is_transferred_lead = 0 OR is_transferred_lead IS NULL) AND ${ringingCondition}`,
+      [telecallerId]
+    );
+    const [ringingDirectRows] = await db.execute(
+      `SELECT COUNT(*) as count FROM direct_leads WHERE telecaller_id = ? AND (is_kyc_done = 0 OR is_kyc_done IS NULL) AND (is_released_to_free_pool = 0 OR is_released_to_free_pool IS NULL) AND (is_closed_lead = 0 OR is_closed_lead IS NULL) AND (is_transferred_lead = 0 OR is_transferred_lead IS NULL) AND ${ringingCondition}`,
+      [telecallerId]
+    );
+
+    const [callbackBotRows] = await db.execute(
+      `SELECT COUNT(*) as count FROM working_sheet WHERE telecaller_id = ? AND (is_kyc_done = 0 OR is_kyc_done IS NULL) AND (is_released_to_free_pool = 0 OR is_released_to_free_pool IS NULL) AND (is_closed_lead = 0 OR is_closed_lead IS NULL) AND (is_transferred_lead = 0 OR is_transferred_lead IS NULL) AND ${callbackCondition}`,
+      [telecallerId]
+    );
+    const [callbackDirectRows] = await db.execute(
+      `SELECT COUNT(*) as count FROM direct_leads WHERE telecaller_id = ? AND (is_kyc_done = 0 OR is_kyc_done IS NULL) AND (is_released_to_free_pool = 0 OR is_released_to_free_pool IS NULL) AND (is_closed_lead = 0 OR is_closed_lead IS NULL) AND (is_transferred_lead = 0 OR is_transferred_lead IS NULL) AND ${callbackCondition}`,
+      [telecallerId]
+    );
+
     res.json({
       
       current: {
@@ -156,6 +202,14 @@ exports.getSummary = async (req, res) => {
       kyc: {
         bot: kycBotRows[0].count,
         direct: kycDirectRows[0].count
+      },
+      ringing: {
+        bot: ringingBotRows[0].count,
+        direct: ringingDirectRows[0].count
+      },
+      callback: {
+        bot: callbackBotRows[0].count,
+        direct: callbackDirectRows[0].count
       },
       old: oldLeadsArray
     });
@@ -193,6 +247,36 @@ exports.getList = async (req, res) => {
       if (!year || !month) return res.status(400).json({ message: "Year and month are required for old leads" });
       dateWhereClause = `YEAR(${tableName}.created_at) = ? AND MONTH(${tableName}.created_at) = ?`;
       params.push(year, month);
+    } else if (period === "ringing") {
+      const nowIst = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      const todayStr = `${nowIst.getFullYear()}-${String(nowIst.getMonth() + 1).padStart(2, '0')}-${String(nowIst.getDate()).padStart(2, '0')}`;
+      
+      dateWhereClause = `(
+        (${tableName}.status3 = 'Ringing')
+        OR 
+        ((${tableName}.status3 IS NULL OR ${tableName}.status3 = 'None' OR ${tableName}.status3 = '') AND ${tableName}.status2 = 'Ringing')
+        OR 
+        ((${tableName}.status3 IS NULL OR ${tableName}.status3 = 'None' OR ${tableName}.status3 = '') AND (${tableName}.status2 IS NULL OR ${tableName}.status2 = 'None' OR ${tableName}.status2 = '') AND ${tableName}.status1 = 'Ringing')
+      )
+      AND DATE(CONVERT_TZ(${tableName}.created_at, '+00:00', '+05:30')) < '${todayStr}'
+      AND (${tableName}.status1_timestamp IS NULL OR DATE(CONVERT_TZ(${tableName}.status1_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+      AND (${tableName}.status2_timestamp IS NULL OR DATE(CONVERT_TZ(${tableName}.status2_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+      AND (${tableName}.status3_timestamp IS NULL OR DATE(CONVERT_TZ(${tableName}.status3_timestamp, '+00:00', '+05:30')) < '${todayStr}')`;
+    } else if (period === "callback") {
+      const nowIst = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      const todayStr = `${nowIst.getFullYear()}-${String(nowIst.getMonth() + 1).padStart(2, '0')}-${String(nowIst.getDate()).padStart(2, '0')}`;
+      
+      dateWhereClause = `(
+        (${tableName}.status3 = 'Call Back')
+        OR 
+        ((${tableName}.status3 IS NULL OR ${tableName}.status3 = 'None' OR ${tableName}.status3 = '') AND ${tableName}.status2 = 'Call Back')
+        OR 
+        ((${tableName}.status3 IS NULL OR ${tableName}.status3 = 'None' OR ${tableName}.status3 = '') AND (${tableName}.status2 IS NULL OR ${tableName}.status2 = 'None' OR ${tableName}.status2 = '') AND ${tableName}.status1 = 'Call Back')
+      )
+      AND DATE(CONVERT_TZ(${tableName}.created_at, '+00:00', '+05:30')) < '${todayStr}'
+      AND (${tableName}.status1_timestamp IS NULL OR DATE(CONVERT_TZ(${tableName}.status1_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+      AND (${tableName}.status2_timestamp IS NULL OR DATE(CONVERT_TZ(${tableName}.status2_timestamp, '+00:00', '+05:30')) < '${todayStr}')
+      AND (${tableName}.status3_timestamp IS NULL OR DATE(CONVERT_TZ(${tableName}.status3_timestamp, '+00:00', '+05:30')) < '${todayStr}')`;
     } else if (period === "kyc") {
       dateWhereClause = `(${tableName}.status1 = 'RdyKYC' OR ${tableName}.status2 = 'RdyKYC' OR ${tableName}.status3 = 'RdyKYC')`;
     } else {

@@ -54,6 +54,9 @@ const LeadList = () => {
   if (period === "current") title = "Current Month";
   else if (period === "past") title = "Past Month";
   else if (period === "old") title = "Old Leads";
+  else if (period === "ringing") title = "Ringing Leads";
+  else if (period === "callback") title = "Call Back Leads";
+  else if (period === "kyc") title = "Ready to KYC";
   
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   if (year && month) {

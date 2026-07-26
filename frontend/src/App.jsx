@@ -28,6 +28,7 @@ import Impersonate from './pages/telecaller/Impersonate';
 import BotPool from './pages/telecaller/BotPool';
 import AdminBulkAdd from './pages/admin/AdminBulkAdd';
 import MyClients from './pages/telecaller/MyClients';
+import MyDhanClients from './pages/telecaller/MyDhanClients';
 import UntouchedLeads from './pages/telecaller/UntouchedLeads';
 import UntouchedBotLeads from './pages/telecaller/UntouchedBotLeads';
 import LastActivity from './pages/admin/LastActivity';
@@ -37,6 +38,7 @@ import AdminClosedLeads from './pages/admin/ClosedLeads';
 import AdminTransferLeads from './pages/admin/TransferLeads';
 import AdminAnalytics from './pages/admin/Analytics';
 import AdminGreetings from './pages/admin/Greetings';
+import NetConversion from './pages/admin/NetConversion';
 
 import TelecallerFetchFreeLead from './pages/telecaller/FetchFreeLead';
 import TelecallerTransferredLeads from './pages/telecaller/TransferredLeads';
@@ -95,6 +97,7 @@ function App() {
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="greetings" element={<AdminGreetings />} />
               <Route path="whatsapp-center" element={<WhatsAppCenter />} />
+              <Route path="net-conversion" element={<NetConversion />} />
             </Route>
 
             <Route path="/telecaller" element={
@@ -105,6 +108,7 @@ function App() {
               <Route index element={<TelecallerDashboard />} />
               <Route path="bot-pool" element={<BotPool />} />
               <Route path="my-clients" element={<MyClients />} />
+              <Route path="my-dhan-clients" element={<MyDhanClients />} />
               <Route path="untouched-leads" element={<UntouchedLeads />} />
               <Route path="untouched-bot-leads" element={<UntouchedBotLeads />} />
               <Route path="leads" element={<Navigate to="current" replace />} />

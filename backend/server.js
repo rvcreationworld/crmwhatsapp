@@ -62,6 +62,7 @@ app.use("/api/admin/closed-leads", require("./routes/adminClosedLeadRoutes"));
 app.use("/api/admin/transfer-leads", require("./routes/adminTransferLeadRoutes"));
 app.use("/api/admin/transferred-leads", require("./routes/adminTransferredLeadRoutes"));
 app.use("/api/admin/analytics", require("./routes/adminAnalyticsRoutes"));
+app.use("/api/admin/net-conversion", require("./routes/adminNetConversionRoutes"));
 app.use("/api/telecaller/free-leads", require("./routes/telecallerFreeLeadRoutes"));
 app.use("/api/telecaller/transferred-leads", require("./routes/telecallerTransferredLeadRoutes"));
 app.use("/api/search", require("./routes/searchRoutes"));

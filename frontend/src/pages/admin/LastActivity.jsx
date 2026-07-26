@@ -109,6 +109,8 @@ const LastActivity = () => {
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Mobile</th>
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Untouched Direct Leads</th>
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Untouched Bot Leads</th>
+                  <th className="p-4 border-b border-slate-200 dark:border-slate-700">Ringing Leads</th>
+                  <th className="p-4 border-b border-slate-200 dark:border-slate-700">Call Back Leads</th>
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Last Call Time</th>
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Last Call Gap</th>
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Total Calls</th>
@@ -143,6 +145,24 @@ const LastActivity = () => {
                             : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
                         }`}>
                           {t.untouched_bot_lead_count} Untouched
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${
+                          t.ringing_leads_count > 0 
+                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20' 
+                            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
+                        }`}>
+                          {t.ringing_leads_count} Ringing
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${
+                          t.callback_leads_count > 0 
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20' 
+                            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
+                        }`}>
+                          {t.callback_leads_count} Call Back
                         </span>
                       </td>
                       <td className="p-4 text-slate-600 dark:text-slate-400">
