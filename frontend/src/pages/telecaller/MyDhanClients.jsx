@@ -6,17 +6,17 @@ import { TableSkeleton } from "../../components/ui/Skeleton";
 import LeadViewToggle from "../../components/leads/LeadViewToggle";
 import LeadCardGrid from "../../components/leads/LeadCardGrid";
 
-const LS_KEY = "crm_view_mode_my_clients";
+const LS_KEY = "crm_view_mode_my_dhan_clients";
 
-const MyClients = () => {
+const MyDhanClients = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState(() => localStorage.getItem(LS_KEY) || "list");
   const handleViewChange = (mode) => { setViewMode(mode); localStorage.setItem(LS_KEY, mode); };
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["myClients"],
+    queryKey: ["myDhanClients"],
     queryFn: async () => {
-      const res = await api.get("/api/telecaller/my-clients");
+      const res = await api.get("/api/telecaller/my-clients/dhan");
       return res.data;
     }
   });
@@ -38,10 +38,10 @@ const MyClients = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
+            <div className="p-2 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl">
               <UserCheck size={24} />
             </div>
-            My Angel Clients
+            My Dhan Clients
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Read-only repository of all your verified clients who have completed KYC.
@@ -49,9 +49,9 @@ const MyClients = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 px-4 py-2 rounded-xl text-sm font-bold border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-2 shadow-sm">
-            <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400" />
-            <span>Total KYC Done: {clients.length}</span>
+          <div className="bg-blue-50 dark:bg-blue-500/10 text-blue-800 dark:text-blue-300 px-4 py-2 rounded-xl text-sm font-bold border border-blue-200 dark:border-blue-500/30 flex items-center gap-2 shadow-sm">
+            <ShieldCheck size={18} className="text-blue-600 dark:text-blue-400" />
+            <span>Total Dhan Clients: {clients.length}</span>
           </div>
           <LeadViewToggle viewMode={viewMode} onChange={handleViewChange} />
         </div>
@@ -80,7 +80,7 @@ const MyClients = () => {
 
         {viewMode === 'grid' && !isLoading && !isError ? (
           <div className="p-4">
-            <LeadCardGrid leads={filteredClients} onLeadClick={() => {}} leadCategory="normal" emptyMessage="No clients found." />
+            <LeadCardGrid leads={filteredClients} onLeadClick={() => {}} leadCategory="dhan" emptyMessage="No Dhan clients found." />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -90,13 +90,13 @@ const MyClients = () => {
               </div>
             ) : isError ? (
               <div className="p-12 text-center text-rose-500 text-sm font-semibold">
-                Failed to load My Angel Clients data. Please try refreshing.
+                Failed to load My Dhan Clients data. Please try refreshing.
               </div>
             ) : filteredClients.length === 0 ? (
               <div className="p-16 text-center text-slate-400 dark:text-slate-500 space-y-3">
                 <UserCheck className="mx-auto text-slate-300 dark:text-slate-600" size={48} />
-                <p className="text-base font-medium">No Angel KYC Done clients found</p>
-                <p className="text-xs text-slate-400">When your leads are marked as KYC Done by Admin, they will appear here automatically.</p>
+                <p className="text-base font-medium">No Dhan clients found</p>
+                <p className="text-xs text-slate-400">When your leads are uploaded for Dhan KYC by Admin, they will appear here automatically.</p>
               </div>
             ) : (
               <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
@@ -105,7 +105,7 @@ const MyClients = () => {
                     <th className="py-3.5 px-6">Client Name</th>
                     <th className="py-3.5 px-6">Mobile Number</th>
                     <th className="py-3.5 px-6">Source</th>
-                    <th className="py-3.5 px-6">KYC Done Date</th>
+                    <th className="py-3.5 px-6">Dhan KYC Date</th>
                     <th className="py-3.5 px-6 text-right">Status</th>
                   </tr>
                 </thead>
@@ -135,15 +135,14 @@ const MyClients = () => {
                       <td className="py-4 px-6 text-xs text-slate-500 dark:text-slate-400">
                         <div className="flex items-center gap-1.5 font-medium">
                           <Calendar size={14} className="text-slate-400" />
-                          {client.kyc_done_at ? new Date(client.kyc_done_at).toLocaleDateString("en-US", { timeZone: "UTC", year: "numeric", month: "short", day: "numeric" })
-                            : client.created_at ? new Date(client.created_at).toLocaleDateString("en-US", { timeZone: "UTC", year: "numeric", month: "short", day: "numeric" })
+                          {client.uploaded_at ? new Date(client.uploaded_at).toLocaleDateString("en-US", { timeZone: "UTC", year: "numeric", month: "short", day: "numeric" })
                             : "—"}
                         </div>
                       </td>
                       <td className="py-4 px-6 text-right">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 shadow-sm border border-emerald-200 dark:border-emerald-500/30">
-                          <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400" />
-                          KYC Done
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300 shadow-sm border border-blue-200 dark:border-blue-500/30">
+                          <ShieldCheck size={14} className="text-blue-600 dark:text-blue-400" />
+                          Dhan KYC Done
                         </span>
                       </td>
                     </tr>
@@ -160,4 +159,4 @@ const MyClients = () => {
   );
 };
 
-export default MyClients;
+export default MyDhanClients;

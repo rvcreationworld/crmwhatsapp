@@ -23,3 +23,23 @@ exports.getMyClients = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error fetching My Clients" });
   }
 };
+
+exports.getMyDhanClients = async (req, res) => {
+  try {
+    const telecallerId = req.user.id;
+
+    const query = `
+      SELECT id, lead_id, client_name as lead_name, mobile as lead_contact, uploaded_at, 'dhan_clients' as lead_table
+      FROM dhan_clients
+      WHERE telecaller_id = ?
+      ORDER BY uploaded_at DESC
+    `;
+
+    const [rows] = await db.query(query, [telecallerId]);
+
+    res.json({ success: true, clients: rows });
+  } catch (error) {
+    console.error("getMyDhanClients error:", error);
+    res.status(500).json({ success: false, message: "Server error fetching My Dhan Clients" });
+  }
+};

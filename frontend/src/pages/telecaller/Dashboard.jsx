@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/axios';
-import { Target, Bot, Layers, AlertCircle, Calendar as CalendarIcon } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import { Target, Bot, Layers, AlertCircle, Calendar as CalendarIcon, PhoneForwarded, PhoneCall, Clock } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ComposedChart, Line } from 'recharts';
+import { formatDurationHMS } from '../../utils/formatters';
 import { CardSkeleton } from '../../components/ui/Skeleton';
 import DashboardGreeting from '../../components/telecaller/DashboardGreeting';
 
@@ -19,6 +20,18 @@ const TelecallerDashboard = () => {
       return res.data;
     }
   });
+
+  const { data: callPulseData, isLoading: isLoadingCallPulse, isError: isErrorCallPulse } = useQuery({
+    queryKey: ['telecallerCallPulseDaily', selectedMonth],
+    queryFn: async () => {
+      const res = await api.get(`/api/dashboard/callpulse-daily?month=${selectedMonth}`);
+      return res.data;
+    }
+  });
+
+  const formatDuration = (seconds) => {
+    return formatDurationHMS(seconds);
+  };
 
   const setMonthOffset = (offsetMonths) => {
     const now = new Date();
@@ -196,6 +209,123 @@ const TelecallerDashboard = () => {
                 </ResponsiveContainer>
               )}
             </div>
+          </div>
+
+          {/* ---------------- DAILY CALLPULSE ACTIVITY ---------------- */}
+          <div className="pt-6 border-t border-slate-200 dark:border-slate-800">
+            {isErrorCallPulse ? (
+              <div className="flex flex-col items-center justify-center p-12 text-slate-500 bg-white dark:bg-[#1e1e2f] border border-slate-200 dark:border-slate-800 rounded-2xl">
+                <AlertCircle size={48} className="text-red-400 mb-4" />
+                <p className="text-lg font-medium text-slate-800 dark:text-slate-200">Failed to load CallPulse analytics.</p>
+              </div>
+            ) : isLoadingCallPulse ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
+                </div>
+                <div className="h-96 bg-white dark:bg-[#1e1e2f] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse" />
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  <div className="bg-white dark:bg-[#1e1e2f] rounded-2xl p-5 flex flex-col justify-between border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-300 group">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-50 dark:bg-blue-500/10 text-blue-500 group-hover:scale-110 transition-transform">
+                        <PhoneForwarded size={20} />
+                      </div>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Dialed</p>
+                    </div>
+                    <p className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight ml-13">
+                      {callPulseData?.totals?.total_dialed || 0}
+                    </p>
+                  </div>
+
+                  <div className="bg-white dark:bg-[#1e1e2f] rounded-2xl p-5 flex flex-col justify-between border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-300 group">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 group-hover:scale-110 transition-transform">
+                        <PhoneCall size={20} />
+                      </div>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Connected</p>
+                    </div>
+                    <p className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight ml-13">
+                      {callPulseData?.totals?.total_connected || 0}
+                    </p>
+                  </div>
+
+                  <div className="bg-white dark:bg-[#1e1e2f] rounded-2xl p-5 flex flex-col justify-between border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-300 group">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-rose-50 dark:bg-rose-500/10 text-rose-500 group-hover:scale-110 transition-transform">
+                        <Clock size={20} />
+                      </div>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Duration</p>
+                    </div>
+                    <p className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight ml-13">
+                      {formatDuration(callPulseData?.totals?.total_duration_seconds)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-[#1e1e2f] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex-1 flex flex-col min-h-[400px]">
+                  <div className="mb-6 shrink-0">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      CallPulse Activity
+                      {callPulseData?.is_current_month && (
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-full">
+                          In Progress
+                        </span>
+                      )}
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Your call activity breakdown for {selectedMonth}</p>
+                  </div>
+                  
+                  <div className="flex-1 w-full relative h-80 min-h-[320px]">
+                    {(!callPulseData?.days || callPulseData.days.length === 0) ? (
+                      <div className="absolute inset-0 flex items-center justify-center text-slate-400">
+                        No data available for this month
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={320}>
+                        <ComposedChart data={callPulseData.days} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
+                          <XAxis dataKey="day" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }} axisLine={false} tickLine={false} dy={10} />
+                          <YAxis yAxisId="left" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                          <YAxis yAxisId="right" orientation="right" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                          <Tooltip 
+                            cursor={{ fill: 'rgba(99, 102, 241, 0.05)' }}
+                            contentStyle={{ borderRadius: '12px', border: '1px solid rgba(148, 163, 184, 0.2)', backgroundColor: 'rgba(30, 30, 47, 0.95)', color: '#fff', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', backdropFilter: 'blur(8px)' }}
+                            formatter={(value, name, props) => {
+                              if (name === 'total_dialed') return [value, 'Total Dialed'];
+                              if (name === 'total_connected') return [value, 'Total Connected'];
+                              if (name === 'total_duration_minutes') {
+                                const totalSecs = props.payload.total_duration_seconds || 0;
+                                return [formatDurationHMS(totalSecs), 'Total Duration'];
+                              }
+                              return [value, name];
+                            }}
+                            labelFormatter={(label) => `Day ${label}, ${selectedMonth}`}
+                          />
+                          <Legend 
+                            iconType="circle" 
+                            formatter={(value) => {
+                              const labels = { 
+                                total_dialed: 'Total Dialed', 
+                                total_connected: 'Total Connected', 
+                                total_duration_minutes: 'Duration (Min)' 
+                              };
+                              return <span className="text-slate-600 dark:text-slate-300 text-sm font-medium">{labels[value] || value}</span>;
+                            }} 
+                            wrapperStyle={{ paddingTop: '20px' }} 
+                          />
+                          <Bar yAxisId="left" dataKey="total_dialed" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={20} animationDuration={1000} />
+                          <Bar yAxisId="left" dataKey="total_connected" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} animationDuration={1000} />
+                          <Line yAxisId="right" type="monotone" dataKey="total_duration_minutes" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} animationDuration={1000} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </>
       )}

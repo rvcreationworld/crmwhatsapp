@@ -8,6 +8,7 @@ const { authMiddleware, adminMiddleware } = require('../middleware/authMiddlewar
 router.use(authMiddleware, adminMiddleware);
 
 router.post('/kyc-done', upload.single('file'), adminBulkAddController.uploadKycDone);
+router.post('/dhan-kyc', upload.single('file'), adminBulkAddController.uploadDhanKyc);
 router.post('/under-us', upload.single('file'), adminBulkAddController.uploadUnderUs);
 router.get('/history', adminBulkAddController.getHistory);
 router.get('/history/:batchId', adminBulkAddController.getBatchResults);

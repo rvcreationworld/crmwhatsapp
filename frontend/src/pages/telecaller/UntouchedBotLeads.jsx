@@ -5,11 +5,13 @@ import { Loader2, PhoneCall, RefreshCw, Target } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LeadViewToggle from '../../components/leads/LeadViewToggle';
 import LeadCardGrid from '../../components/leads/LeadCardGrid';
+import LeadDetailsModal from '../../components/LeadDetailsModal';
 
 const LS_KEY = 'crm_view_mode_untouched_leads';
 
 const UntouchedBotLeads = () => {
   const [viewMode, setViewMode] = useState(() => localStorage.getItem(LS_KEY) || 'list');
+  const [selectedLead, setSelectedLead] = useState(null);
   const handleViewChange = (mode) => { setViewMode(mode); localStorage.setItem(LS_KEY, mode); };
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -73,7 +75,7 @@ const UntouchedBotLeads = () => {
           </p>
         </div>
       ) : viewMode === 'grid' ? (
-        <LeadCardGrid leads={leads} onLeadClick={() => {}} leadCategory="normal" emptyMessage="No untouched leads." />
+        <LeadCardGrid leads={leads} onLeadClick={(lead) => setSelectedLead(lead)} leadCategory="normal" emptyMessage="No untouched bot leads." />
       ) : (
         <div className="bg-white dark:bg-[#1e1e2f] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -89,7 +91,7 @@ const UntouchedBotLeads = () => {
               </thead>
               <tbody className="text-sm">
                 {leads.map((lead) => (
-                  <tr key={lead.id} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
+                  <tr key={lead.id} onClick={() => setSelectedLead(lead)} className="cursor-pointer border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
                     <td className="p-4">
                       <div className="font-semibold text-slate-900 dark:text-white">{lead.lead_name || 'Unknown'}</div>
                       {lead.status1 && <div className="text-xs text-slate-500 mt-1">{lead.status1}</div>}
@@ -118,6 +120,15 @@ const UntouchedBotLeads = () => {
           </div>
         </div>
       )}
+
+      <LeadDetailsModal 
+        isOpen={!!selectedLead} 
+        onClose={() => setSelectedLead(null)} 
+        lead={selectedLead} 
+        type="bot" 
+        userRole="TELECALLER"
+        queryKeyToInvalidate="untouchedLeads"
+      />
     </div>
   );
 };

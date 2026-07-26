@@ -393,9 +393,15 @@ exports.getCallPulseDaily = async (req, res) => {
     let tFilter = "";
     let tParams = [startDate, endDate];
 
-    if (telecaller_id && telecaller_id !== 'all') {
+    let effectiveTelecallerId = telecaller_id;
+
+    if (req.user && req.user.role === 'TELECALLER') {
+      effectiveTelecallerId = req.user.telecaller_id || req.user.id;
+    }
+
+    if (effectiveTelecallerId && effectiveTelecallerId !== 'all') {
       tFilter = " AND telecaller_id = ? ";
-      tParams.push(telecaller_id);
+      tParams.push(effectiveTelecallerId);
     }
 
     const query = `

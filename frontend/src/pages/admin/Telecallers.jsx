@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/axios";
-import { Plus, Edit2, KeyRound, UploadCloud, Trash2, Power, Shield } from "lucide-react";
+import { Plus, Edit2, KeyRound, UploadCloud, Trash2, Power, Shield, Search } from "lucide-react";
 import SyncCampaignModal from "../../components/SyncCampaignModal";
 import toast from "react-hot-toast";
 
@@ -11,6 +11,16 @@ const Telecallers = () => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedTelecaller, setSelectedTelecaller] = useState(null);
   const [errorModalMsg, setErrorModalMsg] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1); // Reset to first page when searching
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
   
   const [formData, setFormData] = useState({
     id: null,
@@ -27,9 +37,9 @@ const Telecallers = () => {
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["telecallers", page],
+    queryKey: ["telecallers", page, debouncedSearch],
     queryFn: async () => {
-      const res = await api.get(`/api/telecallers?page=${page}&limit=50`);
+      const res = await api.get(`/api/telecallers?page=${page}&limit=50&search=${encodeURIComponent(debouncedSearch)}`);
       return res.data;
     },
     keepPreviousData: true
@@ -158,6 +168,18 @@ const Telecallers = () => {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <div className="relative max-w-md w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search by name or mobile..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow"
+            />
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

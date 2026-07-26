@@ -10,6 +10,6 @@ router.get("/telecaller-summary", authMiddleware, dashboardController.getTelecal
 router.get("/lead-source-daily", authMiddleware, adminMiddleware, dashboardController.getLeadSourceDaily);
 router.get("/telecaller/lead-source-daily", authMiddleware, dashboardController.getTelecallerLeadSourceDaily);
 router.get("/status-updates-daily", authMiddleware, adminMiddleware, dashboardController.getStatusUpdatesDaily);
-router.get("/callpulse-daily", authMiddleware, adminMiddleware, dashboardController.getCallPulseDaily);
+router.get("/callpulse-daily", authMiddleware, dashboardController.getCallPulseDaily);
 
 module.exports = router;

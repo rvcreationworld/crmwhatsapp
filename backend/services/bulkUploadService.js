@@ -335,7 +335,7 @@ async function processBulkUpload(fileBuffer, uploadType, fileName, adminId = nul
     [matchedCount, unmatchedCount, batchId]
   );
 
-  return {
+  const summary = {
     batchId,
     totalRows: validMobiles.length,
     matchedCount,
@@ -343,9 +343,123 @@ async function processBulkUpload(fileBuffer, uploadType, fileName, adminId = nul
     updatedCount,
     alreadyKycCount
   };
+
+  return summary;
+}
+
+async function processDhanKycUpload(fileBuffer, adminId = null) {
+  let workbook;
+  try {
+    workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+  } catch (err) {
+    throw new Error("Invalid file format. Please upload a valid CSV, XLSX, or XLS file.");
+  }
+
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) throw new Error("Uploaded file contains no worksheets.");
+
+  const worksheet = workbook.Sheets[sheetName];
+  const rows = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+
+  if (!rows || rows.length === 0) throw new Error("Uploaded file is empty.");
+
+  const validMobiles = [];
+  const seenMobiles = new Set();
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0 || row[0] === undefined || row[0] === null) continue;
+    
+    const rawStr = String(row[0]).trim();
+    const digits = rawStr.replace(/\D/g, '');
+    
+    if (digits.length >= 10) {
+      const last10 = digits.slice(-10);
+      if (last10 !== '0000000000' && !seenMobiles.has(last10)) {
+        seenMobiles.add(last10);
+        validMobiles.push(last10);
+      }
+    }
+  }
+
+  if (validMobiles.length === 0) {
+    throw new Error("No valid 10-digit mobile numbers found.");
+  }
+
+  let matchedCount = 0;
+  let unmatchedCount = 0;
+  let alreadyDhanCount = 0;
+  let newDhanCount = 0;
+
+  for (const last10 of validMobiles) {
+    // Search working_sheet
+    const [wsMatches] = await db.query(
+      `SELECT id, telecaller_id, lead_name, lead_contact FROM working_sheet WHERE contact_last10 = ? OR lead_contact LIKE ? OR RIGHT(REGEXP_REPLACE(lead_contact, '[^0-9]', ''), 10) = ?`,
+      [last10, `%${last10}`, last10]
+    );
+
+    // Search direct_leads
+    const [dlMatches] = await db.query(
+      `SELECT id, telecaller_id, lead_name, lead_contact FROM direct_leads WHERE contact_last10 = ? OR lead_contact LIKE ? OR RIGHT(REGEXP_REPLACE(lead_contact, '[^0-9]', ''), 10) = ?`,
+      [last10, `%${last10}`, last10]
+    );
+
+    const allMatches = [...wsMatches, ...dlMatches];
+
+    if (allMatches.length === 0) {
+      unmatchedCount++;
+      const [existingDhan] = await db.query(
+        `SELECT id FROM dhan_clients WHERE mobile LIKE ? OR RIGHT(REGEXP_REPLACE(mobile, '[^0-9]', ''), 10) = ?`,
+        [`%${last10}`, last10]
+      );
+      if (existingDhan.length > 0) {
+        alreadyDhanCount++;
+        await db.query(`UPDATE dhan_clients SET uploaded_at = NOW() WHERE id = ?`, [existingDhan[0].id]);
+      } else {
+        await db.query(
+          `INSERT INTO dhan_clients (lead_id, telecaller_id, uploaded_by, client_name, mobile, pan_number, kyc_document_path, uploaded_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NOW())`,
+          [null, null, adminId, 'Unknown', last10]
+        );
+      }
+    } else {
+      let isAlreadyDhan = false;
+      let isNewDhan = false;
+
+      for (const match of allMatches) {
+        const [existingDhan] = await db.query(
+          `SELECT id FROM dhan_clients WHERE lead_id = ? OR (mobile LIKE ? AND telecaller_id = ?)`,
+          [match.id, `%${last10}`, match.telecaller_id]
+        );
+
+        if (existingDhan.length > 0) {
+          isAlreadyDhan = true;
+          await db.query(`UPDATE dhan_clients SET uploaded_at = NOW() WHERE id = ?`, [existingDhan[0].id]);
+        } else {
+          isNewDhan = true;
+          await db.query(
+            `INSERT INTO dhan_clients (lead_id, telecaller_id, uploaded_by, client_name, mobile, pan_number, kyc_document_path, uploaded_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NOW())`,
+            [match.id, match.telecaller_id, adminId, match.lead_name || 'Unknown', match.lead_contact || last10]
+          );
+        }
+      }
+
+      matchedCount++;
+      if (isNewDhan) newDhanCount++;
+      else if (isAlreadyDhan) alreadyDhanCount++;
+    }
+  }
+
+  return {
+    totalRows: validMobiles.length,
+    matchedCount,
+    unmatchedCount,
+    newDhanCount,
+    alreadyDhanCount
+  };
 }
 
 module.exports = {
+  processBulkUpload,
   ensureBulkUploadSchema,
-  processBulkUpload
+  processDhanKycUpload
 };

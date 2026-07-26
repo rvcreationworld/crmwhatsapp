@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { processBulkUpload, ensureBulkUploadSchema } = require('../services/bulkUploadService');
+const { processBulkUpload, ensureBulkUploadSchema, processDhanKycUpload } = require('../services/bulkUploadService');
 
 exports.uploadKycDone = async (req, res) => {
   try {
@@ -46,6 +46,28 @@ exports.uploadUnderUs = async (req, res) => {
   } catch (error) {
     console.error("uploadUnderUs error:", error);
     res.status(500).json({ success: false, message: error.message || "Server error during Under Us bulk upload" });
+  }
+};
+
+exports.uploadDhanKyc = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    const result = await processDhanKycUpload(
+      req.file.buffer,
+      req.user?.id || null
+    );
+
+    res.json({
+      success: true,
+      message: "Dhan KYC bulk upload completed successfully",
+      data: result
+    });
+  } catch (error) {
+    console.error("uploadDhanKyc error:", error);
+    res.status(500).json({ success: false, message: error.message || "Server error during Dhan KYC bulk upload" });
   }
 };
 

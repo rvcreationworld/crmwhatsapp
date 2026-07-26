@@ -5,15 +5,28 @@ exports.getAll = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
+    const search = req.query.search || '';
     const offset = (page - 1) * limit;
 
-    const [countResult] = await db.query("SELECT COUNT(*) as count FROM telecaller_master WHERE is_deleted = 0");
+    let countQuery = "SELECT COUNT(*) as count FROM telecaller_master WHERE is_deleted = 0";
+    let countParams = [];
+    let dataQuery = "SELECT id, telecaller_name, tele_mobile, telegram_user_id, is_active, own_campaign_enabled, interakt_agent_email, interakt_agent_status, interakt_last_verified_at, created_at, phone_last10, last_verified, bot_leads_paused FROM telecaller_master WHERE is_deleted = 0";
+    let dataParams = [];
+
+    if (search) {
+      countQuery += " AND (telecaller_name LIKE ? OR tele_mobile LIKE ?)";
+      countParams.push(`%${search}%`, `%${search}%`);
+      dataQuery += " AND (telecaller_name LIKE ? OR tele_mobile LIKE ?)";
+      dataParams.push(`%${search}%`, `%${search}%`);
+    }
+
+    dataQuery += " ORDER BY CAST(SUBSTRING(SUBSTRING_INDEX(telecaller_name, ' ', 1), 2) AS UNSIGNED) ASC LIMIT ? OFFSET ?";
+    dataParams.push(limit, offset);
+
+    const [countResult] = await db.query(countQuery, countParams);
     const totalCount = countResult[0].count;
 
-    const [rows] = await db.query(
-      "SELECT id, telecaller_name, tele_mobile, telegram_user_id, is_active, own_campaign_enabled, interakt_agent_email, interakt_agent_status, interakt_last_verified_at, created_at, phone_last10, last_verified, bot_leads_paused FROM telecaller_master WHERE is_deleted = 0 ORDER BY CAST(SUBSTRING(SUBSTRING_INDEX(telecaller_name, ' ', 1), 2) AS UNSIGNED) ASC LIMIT ? OFFSET ?",
-      [limit, offset]
-    );
+    const [rows] = await db.query(dataQuery, dataParams);
 
     res.json({
       data: rows,

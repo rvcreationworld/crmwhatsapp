@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../api/axios";
 import { User, Phone, Save, Loader2, X, Tag, Calendar, Clock } from "lucide-react";
@@ -174,10 +175,10 @@ const LeadDetailsModal = ({ isOpen, onClose, lead, type, userRole, queryKeyToInv
 
   if (!isOpen || !lead) return null;
 
-  return (
+  return createPortal(
     <>
       <div
-        className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5"
+        className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-5"
         onClick={onClose}
       >
         <div
@@ -347,7 +348,8 @@ const LeadDetailsModal = ({ isOpen, onClose, lead, type, userRole, queryKeyToInv
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 

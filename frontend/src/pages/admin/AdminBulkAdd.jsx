@@ -9,8 +9,10 @@ const AdminBulkAdd = () => {
   const queryClient = useQueryClient();
   const [kycFile, setKycFile] = useState(null);
   const [underUsFile, setUnderUsFile] = useState(null);
+  const [dhanFile, setDhanFile] = useState(null);
   const [kycSummary, setKycSummary] = useState(null);
   const [underUsSummary, setUnderUsSummary] = useState(null);
+  const [dhanSummary, setDhanSummary] = useState(null);
   const [selectedBatchId, setSelectedBatchId] = useState(null);
 
   // Fetch upload history
@@ -74,6 +76,25 @@ const AdminBulkAdd = () => {
     }
   });
 
+  const uploadDhanMutation = useMutation({
+    mutationFn: async (file) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await api.post("/api/admin/bulk-add/dhan-kyc", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Dhan KYC upload successful");
+      setDhanSummary(data.data);
+      setDhanFile(null);
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Upload failed");
+    }
+  });
+
   const handleKycSubmit = (e) => {
     e.preventDefault();
     if (!kycFile) {
@@ -90,6 +111,15 @@ const AdminBulkAdd = () => {
       return;
     }
     uploadUnderUsMutation.mutate(underUsFile);
+  };
+
+  const handleDhanSubmit = (e) => {
+    e.preventDefault();
+    if (!dhanFile) {
+      toast.error("Please select a file first");
+      return;
+    }
+    uploadDhanMutation.mutate(dhanFile);
   };
 
   const getStatusBadge = (status) => {
@@ -121,7 +151,7 @@ const AdminBulkAdd = () => {
       </div>
 
       {/* Upload Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
         {/* Block 1: KYC Done */}
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 flex flex-col justify-between relative overflow-hidden">
@@ -134,7 +164,7 @@ const AdminBulkAdd = () => {
                   <ShieldCheck size={24} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">KYC Done Upload</h2>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Angel KYC Done Upload</h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Permanently locks Status 1, 2 & 3</p>
                 </div>
               </div>
@@ -303,6 +333,91 @@ const AdminBulkAdd = () => {
               >
                 <Eye size={14} /> View Detailed Row-by-Row Results
               </button>
+            </div>
+          )}
+        </div>
+
+        {/* Block 3: Dhan KYC */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 to-cyan-500" />
+          
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg">
+                  <ShieldCheck size={24} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Dhan KYC Upload</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Completely independent workflow</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 mb-6 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700 leading-relaxed">
+              Matched leads will be added to the independent <strong className="text-blue-600 dark:text-blue-400">Dhan Clients</strong> table. They will <strong className="text-rose-500">NOT</strong> be frozen or removed from the normal lead workflow.
+            </p>
+
+            <form onSubmit={handleDhanSubmit} className="space-y-4">
+              <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-4 text-center hover:border-blue-500 dark:hover:border-blue-500 transition-colors bg-slate-50/50 dark:bg-slate-800/50">
+                <input
+                  type="file"
+                  id="dhan-file"
+                  accept=".csv, .xlsx, .xls"
+                  onChange={(e) => setDhanFile(e.target.files[0] || null)}
+                  className="hidden"
+                />
+                <label htmlFor="dhan-file" className="cursor-pointer block">
+                  <FileText className="mx-auto text-slate-400 mb-2" size={32} />
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                    {dhanFile ? dhanFile.name : "Click to select file (.csv, .xlsx, .xls)"}
+                  </span>
+                  <span className="text-xs text-slate-400 mt-1 block">First column must contain Mobile Numbers</span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={!dhanFile || uploadDhanMutation.isPending}
+                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-2"
+              >
+                {uploadDhanMutation.isPending ? (
+                  <>
+                    <RefreshCw className="animate-spin" size={18} />
+                    Processing Upload...
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud size={18} />
+                    Upload Dhan KYC
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Dhan Summary Card */}
+          {dhanSummary && (
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 animate-in fade-in">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Latest Dhan Upload Summary</h4>
+              <div className="grid grid-cols-2 gap-2 text-xs mb-4">
+                <div className="bg-slate-50 dark:bg-slate-700/50 p-2 rounded border border-slate-200/60 dark:border-slate-700">
+                  <span className="text-slate-400 block">Total Rows</span>
+                  <span className="font-bold text-slate-800 dark:text-white text-sm">{dhanSummary.totalRows}</span>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-500/10 p-2 rounded border border-blue-200/60 dark:border-blue-500/30">
+                  <span className="text-blue-600 dark:text-blue-400 block">Matched Leads</span>
+                  <span className="font-bold text-blue-800 dark:text-blue-300 text-sm">{dhanSummary.matchedCount}</span>
+                </div>
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 p-2 rounded border border-emerald-200/60 dark:border-emerald-500/30">
+                  <span className="text-emerald-600 dark:text-emerald-400 block">New Dhan Added</span>
+                  <span className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">{dhanSummary.newDhanCount}</span>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-500/10 p-2 rounded border border-purple-200/60 dark:border-purple-500/30">
+                  <span className="text-purple-600 dark:text-purple-400 block">Already Dhan</span>
+                  <span className="font-bold text-purple-800 dark:text-purple-300 text-sm">{dhanSummary.alreadyDhanCount}</span>
+                </div>
+              </div>
             </div>
           )}
         </div>

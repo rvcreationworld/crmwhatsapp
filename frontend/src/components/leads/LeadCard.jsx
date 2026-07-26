@@ -80,12 +80,17 @@ const LeadCard = ({ lead, onClick, showTelecaller = false, leadCategory = "norma
           </div>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
-          {latestStatus && (
+          {latestStatus && leadCategory !== "dhan" && (
             <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold", statusColor)}>
               {latestStatus}
             </span>
           )}
-          {lead.is_untouched && (
+          {leadCategory === "dhan" && (
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-200 dark:border-blue-800/30">
+              Dhan KYC
+            </span>
+          )}
+          {lead.is_untouched && leadCategory !== "dhan" && (
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-800/30">
               Untouched
             </span>
