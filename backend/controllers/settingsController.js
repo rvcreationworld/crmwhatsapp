@@ -161,9 +161,12 @@ exports.updateCallPulseSettings = async (req, res) => {
     await ensureSettingsTable();
     const { enabled, today_rule_enabled, green_min_seconds, yellow_min_seconds, red_min_seconds, blue_min_seconds } = req.body;
     
+    const isCpEnabled = String(enabled) === 'true' || enabled === true || enabled === 1 || enabled === '1';
+    const isTodayRuleEnabled = String(today_rule_enabled) === 'true' || today_rule_enabled === true || today_rule_enabled === 1 || today_rule_enabled === '1';
+
     const kvs = [
-      ['callpulse_status_rule_enabled', enabled ? '1' : '0'],
-      ['callpulse_today_rule_enabled', today_rule_enabled ? '1' : '0'],
+      ['callpulse_status_rule_enabled', isCpEnabled ? '1' : '0'],
+      ['callpulse_today_rule_enabled', isTodayRuleEnabled ? '1' : '0'],
       ['callpulse_green_min_seconds', green_min_seconds],
       ['callpulse_yellow_min_seconds', yellow_min_seconds],
       ['callpulse_red_min_seconds', red_min_seconds],
