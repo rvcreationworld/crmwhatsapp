@@ -123,7 +123,12 @@ exports.updateStatus = async (req, res) => {
 
 
       // New CallPulse validation
-      const statusesToValidate = [status1, status2, status3].filter(s => s !== undefined);
+      const statusesToValidate = [
+        { index: 1, value: status1 },
+        { index: 2, value: status2 },
+        { index: 3, value: status3 }
+      ].filter(s => s.value !== undefined);
+
       for (const st of statusesToValidate) {
         const cpVal = await validateCallPulseStatusRequirement({
           telecallerId: req.user.id,
@@ -131,7 +136,8 @@ exports.updateStatus = async (req, res) => {
           leadType: 'DIRECT',
           leadContact: oldLead.lead_contact,
           contactLast10: oldLead.contact_last10,
-          statusValue: st
+          statusValue: st.value,
+          statusIndex: st.index
         });
         if (!cpVal.allowed) {
           return res.status(400).json({ success: false, message: cpVal.reason });

@@ -203,7 +203,8 @@ exports.updateStatus1 = async (req, res) => {
       leadType: 'BOT',
       leadContact: existing[0].lead_contact,
       contactLast10: existing[0].contact_last10,
-      statusValue: status1
+      statusValue: status1,
+      statusIndex: 1
     });
     if (!cpVal.allowed) {
       return res.status(400).json({ success: false, message: cpVal.reason });

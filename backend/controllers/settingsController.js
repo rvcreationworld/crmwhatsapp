@@ -120,6 +120,7 @@ exports.getCallPulseSettings = async (req, res) => {
       `SELECT setting_key, setting_value FROM app_settings 
        WHERE setting_key IN (
          'callpulse_status_rule_enabled',
+         'callpulse_today_rule_enabled',
          'callpulse_green_min_seconds',
          'callpulse_yellow_min_seconds',
          'callpulse_red_min_seconds',
@@ -129,6 +130,7 @@ exports.getCallPulseSettings = async (req, res) => {
 
     const settings = {
       enabled: true,
+      today_rule_enabled: true,
       green_min_seconds: 100,
       yellow_min_seconds: 60,
       red_min_seconds: 10,
@@ -139,6 +141,7 @@ exports.getCallPulseSettings = async (req, res) => {
       const val = parseInt(row.setting_value, 10);
       if (!isNaN(val)) {
         if (row.setting_key === 'callpulse_status_rule_enabled') settings.enabled = val === 1;
+        if (row.setting_key === 'callpulse_today_rule_enabled') settings.today_rule_enabled = val === 1;
         if (row.setting_key === 'callpulse_green_min_seconds') settings.green_min_seconds = val;
         if (row.setting_key === 'callpulse_yellow_min_seconds') settings.yellow_min_seconds = val;
         if (row.setting_key === 'callpulse_red_min_seconds') settings.red_min_seconds = val;
@@ -156,10 +159,11 @@ exports.getCallPulseSettings = async (req, res) => {
 exports.updateCallPulseSettings = async (req, res) => {
   try {
     await ensureSettingsTable();
-    const { enabled, green_min_seconds, yellow_min_seconds, red_min_seconds, blue_min_seconds } = req.body;
+    const { enabled, today_rule_enabled, green_min_seconds, yellow_min_seconds, red_min_seconds, blue_min_seconds } = req.body;
     
     const kvs = [
       ['callpulse_status_rule_enabled', enabled ? '1' : '0'],
+      ['callpulse_today_rule_enabled', today_rule_enabled ? '1' : '0'],
       ['callpulse_green_min_seconds', green_min_seconds],
       ['callpulse_yellow_min_seconds', yellow_min_seconds],
       ['callpulse_red_min_seconds', red_min_seconds],

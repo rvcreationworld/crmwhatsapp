@@ -16,8 +16,8 @@ const Settings = () => {
   const [statusLockingEnabled, setStatusLockingEnabled] = useState(true);
   const [botAutoAssignTopCount, setBotAutoAssignTopCount] = useState(10);
 
-  // CallPulse Settings
   const [cpEnabled, setCpEnabled] = useState(true);
+  const [cpTodayRuleEnabled, setCpTodayRuleEnabled] = useState(true);
   const [cpGreen, setCpGreen] = useState(100);
   const [cpYellow, setCpYellow] = useState(60);
   const [cpRed, setCpRed] = useState(10);
@@ -53,6 +53,7 @@ const Settings = () => {
   useEffect(() => {
     if (callpulseData) {
       if (callpulseData.enabled !== undefined) setCpEnabled(callpulseData.enabled);
+      if (callpulseData.today_rule_enabled !== undefined) setCpTodayRuleEnabled(callpulseData.today_rule_enabled);
       if (callpulseData.green_min_seconds !== undefined) setCpGreen(callpulseData.green_min_seconds);
       if (callpulseData.yellow_min_seconds !== undefined) setCpYellow(callpulseData.yellow_min_seconds);
       if (callpulseData.red_min_seconds !== undefined) setCpRed(callpulseData.red_min_seconds);
@@ -144,6 +145,7 @@ const Settings = () => {
     e.preventDefault();
     updateCallpulseMutation.mutate({ 
       enabled: cpEnabled,
+      today_rule_enabled: cpTodayRuleEnabled,
       green_min_seconds: cpGreen,
       yellow_min_seconds: cpYellow,
       red_min_seconds: cpRed,
@@ -260,6 +262,17 @@ const Settings = () => {
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" checked={cpEnabled} onChange={e => setCpEnabled(e.target.checked)} />
+              <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-[#151521] border border-slate-200 dark:border-slate-700 rounded-xl">
+            <div>
+              <label className="text-sm font-bold text-slate-900 dark:text-white">Require Today's Call for Status 2 & 3</label>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">If enabled, status 2 and 3 require a valid call fetched on the same day.</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" className="sr-only peer" checked={cpTodayRuleEnabled} onChange={e => setCpTodayRuleEnabled(e.target.checked)} />
               <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
             </label>
           </div>

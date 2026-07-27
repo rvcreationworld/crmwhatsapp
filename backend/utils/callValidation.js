@@ -18,7 +18,8 @@ async function validateCallPulseStatusRequirement({
   leadType,
   leadContact,
   contactLast10,
-  statusValue
+  statusValue,
+  statusIndex
 }) {
   if (isEmptyStatus(statusValue)) {
     return { allowed: true };
@@ -50,11 +51,13 @@ async function validateCallPulseStatusRequirement({
        'callpulse_yellow_min_seconds',
        'callpulse_red_min_seconds',
        'callpulse_blue_min_seconds',
-       'callpulse_status_rule_enabled'
+       'callpulse_status_rule_enabled',
+       'callpulse_today_rule_enabled'
      )`
   );
 
   let enabled = 1;
+  let todayRuleEnabled = 1;
   let greenMin = 100;
   let yellowMin = 60;
   let redMin = 10;
@@ -64,6 +67,7 @@ async function validateCallPulseStatusRequirement({
     const val = parseInt(row.setting_value, 10);
     if (!isNaN(val)) {
       if (row.setting_key === 'callpulse_status_rule_enabled') enabled = val;
+      if (row.setting_key === 'callpulse_today_rule_enabled') todayRuleEnabled = val;
       if (row.setting_key === 'callpulse_green_min_seconds') greenMin = val;
       if (row.setting_key === 'callpulse_yellow_min_seconds') yellowMin = val;
       if (row.setting_key === 'callpulse_red_min_seconds') redMin = val;
@@ -86,6 +90,11 @@ async function validateCallPulseStatusRequirement({
   if (!contactLast10) contactLast10 = last10Fallback;
   if (!contactLast10) contactLast10 = 'NO_MATCH_FALLBACK';
 
+  let dateFilter = '';
+  if (todayRuleEnabled === 1 && (statusIndex === 2 || statusIndex === 3)) {
+    dateFilter = " AND DATE(CONVERT_TZ(call_started_at, '+00:00', '+05:30')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+05:30'))";
+  }
+
   // Query logic
   const query = `
     SELECT call_type, duration_seconds, call_started_at 
@@ -96,6 +105,7 @@ async function validateCallPulseStatusRequirement({
         OR normalized_number = ?
         OR normalized_number = ?
       )
+      ${dateFilter}
   `;
   const params = [
     telecallerId,
@@ -106,6 +116,13 @@ async function validateCallPulseStatusRequirement({
   ];
 
   const [calls] = await db.query(query, params);
+
+  if (todayRuleEnabled === 1 && (statusIndex === 2 || statusIndex === 3) && calls.length === 0) {
+    return {
+      allowed: false,
+      reason: "todays call log is not fetched"
+    };
+  }
 
   if (category === 'BLUE') {
     // Need at least one OUTGOING dial (duration doesn't matter)

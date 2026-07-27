@@ -93,7 +93,8 @@ exports.updateStatus4 = async (req, res) => {
       leadType,
       leadContact: lead.lead_contact,
       contactLast10: lead.contact_last10,
-      statusValue: status4
+      statusValue: status4,
+      statusIndex: 4
     });
 
     if (!validation.allowed) {
