@@ -51,6 +51,7 @@ app.use("/api/telecaller/analytics", require("./routes/telecallerAnalyticsRoutes
 app.use("/api/admin/tele-login", require("./routes/adminTeleloginRoutes"));
 app.use("/api/admin/common-campaign", require("./routes/commonCampaignRoutes"));
 app.use("/api/telecaller/bot-pool", require("./routes/telecallerBotPoolRoutes"));
+app.use("/api/telecaller/hot-leads", require("./routes/telecallerHotLeadsRoutes"));
 app.use("/api/admin/bulk-add", require("./routes/adminBulkAddRoutes"));
 app.use("/api/admin/attendance", require("./routes/adminAttendanceRoutes"));
 app.use("/api/telecaller/my-clients", require("./routes/telecallerMyClientsRoutes"));

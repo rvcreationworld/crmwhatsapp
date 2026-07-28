@@ -125,10 +125,20 @@ const LeadDetailsModal = ({ isOpen, onClose, lead, type, userRole, queryKeyToInv
 
   const updateMutation = useMutation({
     mutationFn: async (payload) => {
-      const endpoint = type === "bot"
-        ? `/api/working-sheet/${lead.id}/telecaller-update`
-        : `/api/direct-leads/${lead.id}/status`;
-      const res = await api.put(endpoint, payload);
+      let endpoint;
+      let method = 'put';
+      if (type === "bot") {
+        endpoint = `/api/working-sheet/${lead.id}/telecaller-update`;
+      } else if (type === "direct") {
+        endpoint = `/api/direct-leads/${lead.id}/status`;
+      } else if (type === "transferred") {
+        endpoint = `/api/telecaller/transferred-leads/${lead.id}/status4`;
+        method = 'post';
+      } else if (type === "free") {
+        endpoint = `/api/telecaller/free-leads/${lead.id}/status4`;
+        method = 'post';
+      }
+      const res = await api[method](endpoint, payload);
       return res.data;
     },
     onSuccess: () => {
@@ -149,14 +159,23 @@ const LeadDetailsModal = ({ isOpen, onClose, lead, type, userRole, queryKeyToInv
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!lead) return;
-    updateMutation.mutate({
-      status1: status1Input,
-      status1_remark: status1RemarkInput,
-      status2: status2Input,
-      status2_remark: status2RemarkInput,
-      status3: status3Input,
-      status3_remark: status3RemarkInput
-    });
+    let payload = {};
+    if (type === 'transferred' || type === 'free') {
+      payload = {
+        status4: status1Input,
+        status4_remark: status1RemarkInput
+      };
+    } else {
+      payload = {
+        status1: status1Input,
+        status1_remark: status1RemarkInput,
+        status2: status2Input,
+        status2_remark: status2RemarkInput,
+        status3: status3Input,
+        status3_remark: status3RemarkInput
+      };
+    }
+    updateMutation.mutate(payload);
   };
 
   const isKycDone = lead?.is_kyc_done === 1 || lead?.status_lock_type === 'KYC_DONE';
@@ -284,7 +303,7 @@ const LeadDetailsModal = ({ isOpen, onClose, lead, type, userRole, queryKeyToInv
                     <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Update Status</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       <StatusCard
-                        label={type === "bot" ? "Status 1 (Bot)" : "Status 1"}
+                        label={type === "bot" ? "Status 1 (Bot)" : (type === "transferred" || type === "free" ? "Status" : "Status 1")}
                         isEditable={true}
                         input={status1Input}
                         remarkInput={status1RemarkInput}
@@ -294,27 +313,31 @@ const LeadDetailsModal = ({ isOpen, onClose, lead, type, userRole, queryKeyToInv
                         lockReason={status1LockReason}
                         timestamp={lead.status1_timestamp}
                       />
-                      <StatusCard
-                        label={type === "bot" ? "Status 2 (Bot)" : "Status 2"}
-                        isEditable={true}
-                        input={status2Input}
-                        remarkInput={status2RemarkInput}
-                        onInput={setStatus2Input}
-                        onRemark={setStatus2RemarkInput}
-                        locked={status2Disabled}
-                        lockReason={status2LockReason}
-                        timestamp={lead.status2_timestamp}
-                      />
-                      <StatusCard
-                        label="Final Status"
-                        isEditable={true}
-                        input={status3Input}
-                        remarkInput={status3RemarkInput}
-                        onInput={setStatus3Input}
-                        onRemark={setStatus3RemarkInput}
-                        locked={status3Disabled}
-                        timestamp={lead.status3_timestamp}
-                      />
+                      {type !== "transferred" && type !== "free" && (
+                        <>
+                          <StatusCard
+                            label={type === "bot" ? "Status 2 (Bot)" : "Status 2"}
+                            isEditable={true}
+                            input={status2Input}
+                            remarkInput={status2RemarkInput}
+                            onInput={setStatus2Input}
+                            onRemark={setStatus2RemarkInput}
+                            locked={status2Disabled}
+                            lockReason={status2LockReason}
+                            timestamp={lead.status2_timestamp}
+                          />
+                          <StatusCard
+                            label="Final Status"
+                            isEditable={true}
+                            input={status3Input}
+                            remarkInput={status3RemarkInput}
+                            onInput={setStatus3Input}
+                            onRemark={setStatus3RemarkInput}
+                            locked={status3Disabled}
+                            timestamp={lead.status3_timestamp}
+                          />
+                        </>
+                      )}
                     </div>
 
                     <button

@@ -39,6 +39,7 @@ import AdminTransferLeads from './pages/admin/TransferLeads';
 import AdminAnalytics from './pages/admin/Analytics';
 import AdminGreetings from './pages/admin/Greetings';
 import NetConversion from './pages/admin/NetConversion';
+import HotLeads from './pages/telecaller/HotLeads';
 
 import TelecallerFetchFreeLead from './pages/telecaller/FetchFreeLead';
 import TelecallerTransferredLeads from './pages/telecaller/TransferredLeads';
@@ -109,6 +110,7 @@ function App() {
               <Route path="bot-pool" element={<BotPool />} />
               <Route path="my-clients" element={<MyClients />} />
               <Route path="my-dhan-clients" element={<MyDhanClients />} />
+              <Route path="hot-leads" element={<HotLeads />} />
               <Route path="untouched-leads" element={<UntouchedLeads />} />
               <Route path="untouched-bot-leads" element={<UntouchedBotLeads />} />
               <Route path="leads" element={<Navigate to="current" replace />} />

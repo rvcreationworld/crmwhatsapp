@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Users, UserSquare2, FileText, Database, BarChart3, Menu, Settings, Moon, Sun, Bell, Search, ChevronLeft, ChevronRight, Target, PhoneCall, History, TrendingUp, UploadCloud, UserCheck, Activity, Calendar, Archive, ArrowRightLeft, Megaphone, ChevronDown, Shield, MessageCircle, ListTodo, Inbox, LayoutTemplate, Image as ImageIcon, Repeat, Percent } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, UserSquare2, FileText, Database, BarChart3, Menu, Settings, Moon, Sun, Bell, Search, ChevronLeft, ChevronRight, Target, PhoneCall, History, TrendingUp, UploadCloud, UserCheck, Activity, Calendar, Archive, ArrowRightLeft, Megaphone, ChevronDown, Shield, MessageCircle, ListTodo, Inbox, LayoutTemplate, Image as ImageIcon, Repeat, Percent, Flame } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { cn } from '../components/ui/Skeleton';
@@ -279,6 +279,9 @@ const DashboardLayout = () => {
             ) : (
               <>
                 {telecallerTopLinks.map(link => renderLink(link))}
+                
+                <li className="pt-2 mt-2 border-t border-white/5"></li>
+                {renderLink({ name: 'Hot Leads', path: '/telecaller/hot-leads', icon: <Flame size={20} /> })}
                 
                 <li className="pt-2 mt-2 border-t border-white/5">
                   <button

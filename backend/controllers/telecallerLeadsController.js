@@ -373,8 +373,18 @@ exports.checkStatusPermission = async (req, res) => {
   try {
     const { leadType, leadId } = req.params;
 
-    let tableName = (leadType?.toUpperCase() === 'BOT') ? 'working_sheet' : 'direct_leads';
-    const [leads] = await db.query(`SELECT status1, status1_timestamp, status2, status2_timestamp, status3, status3_timestamp, status_lock_type, is_kyc_done FROM ${tableName} WHERE id = ?`, [leadId]);
+    let tableName;
+    if (leadType?.toUpperCase() === 'BOT') tableName = 'working_sheet';
+    else if (leadType?.toUpperCase() === 'TRANSFERRED') tableName = 'transferred_leads';
+    else if (leadType?.toUpperCase() === 'FREE') tableName = 'free_leads';
+    else tableName = 'direct_leads';
+
+    let leads = [];
+    if (tableName === 'transferred_leads' || tableName === 'free_leads') {
+      [leads] = await db.query(`SELECT status4 as status1, status4_timestamp as status1_timestamp, 'None' as status_lock_type, 0 as is_kyc_done FROM ${tableName} WHERE id = ?`, [leadId]);
+    } else {
+      [leads] = await db.query(`SELECT status1, status1_timestamp, status2, status2_timestamp, status3, status3_timestamp, status_lock_type, is_kyc_done FROM ${tableName} WHERE id = ?`, [leadId]);
+    }
     const lockState = leads.length > 0 ? getStatusLockState(leads[0]) : getStatusLockState(null);
 
     res.json({
