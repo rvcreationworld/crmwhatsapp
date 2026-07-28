@@ -107,9 +107,39 @@ exports.getLastActivity = async (req, res) => {
 
     const [rows] = await db.query(query);
 
+    const hotLeadsQuery = `
+      SELECT hl.telecaller_id, COUNT(*) as hot_leads_count
+      FROM (
+        SELECT telecaller_id, lead_id, lead_type
+        FROM callpulse_call_logs
+        GROUP BY telecaller_id, lead_id, lead_type
+        HAVING SUM(duration_seconds) >= 300
+      ) hl
+      LEFT JOIN working_sheet ws ON hl.lead_type = 'BOT' AND hl.lead_id = ws.id
+      LEFT JOIN direct_leads dl ON hl.lead_type = 'DIRECT' AND hl.lead_id = dl.id
+      LEFT JOIN transferred_leads tl ON hl.lead_type = 'TRANSFERRED' AND hl.lead_id = tl.id
+      LEFT JOIN free_leads fl ON hl.lead_type = 'FREE' AND hl.lead_id = fl.id
+      WHERE (
+        (hl.lead_type = 'BOT' AND ws.id IS NOT NULL AND (ws.status1 NOT IN ('Wrong No', 'Not Int') OR ws.status1 IS NULL) AND (ws.status2 NOT IN ('Wrong No', 'Not Int') OR ws.status2 IS NULL) AND (ws.status3 IS NULL OR ws.status3 = 'None' OR ws.status3 = ''))
+        OR
+        (hl.lead_type = 'DIRECT' AND dl.id IS NOT NULL AND (dl.status1 NOT IN ('Wrong No', 'Not Int') OR dl.status1 IS NULL) AND (dl.status2 NOT IN ('Wrong No', 'Not Int') OR dl.status2 IS NULL) AND (dl.status3 IS NULL OR dl.status3 = 'None' OR dl.status3 = ''))
+        OR
+        (hl.lead_type = 'TRANSFERRED' AND tl.id IS NOT NULL AND (tl.status1 NOT IN ('Wrong No', 'Not Int') OR tl.status1 IS NULL) AND (tl.status2 NOT IN ('Wrong No', 'Not Int') OR tl.status2 IS NULL) AND (tl.status3 NOT IN ('Wrong No', 'Not Int') OR tl.status3 IS NULL) AND (tl.status4 NOT IN ('Wrong No', 'Not Int') OR tl.status4 IS NULL))
+        OR
+        (hl.lead_type = 'FREE' AND fl.id IS NOT NULL AND (fl.status1 NOT IN ('Wrong No', 'Not Int') OR fl.status1 IS NULL) AND (fl.status2 NOT IN ('Wrong No', 'Not Int') OR fl.status2 IS NULL) AND (fl.status3 NOT IN ('Wrong No', 'Not Int') OR fl.status3 IS NULL) AND (fl.status4 NOT IN ('Wrong No', 'Not Int') OR fl.status4 IS NULL))
+      )
+      GROUP BY hl.telecaller_id
+    `;
+    const [hotLeadsRows] = await db.query(hotLeadsQuery);
+    const hotLeadsMap = {};
+    hotLeadsRows.forEach(r => {
+      hotLeadsMap[r.telecaller_id] = r.hot_leads_count;
+    });
+
     const telecallers = rows.map(row => ({
       ...row,
-      last_call_gap_label: formatGapLabel(row.last_call_gap_seconds)
+      last_call_gap_label: formatGapLabel(row.last_call_gap_seconds),
+      hot_leads_count: hotLeadsMap[row.telecaller_id] || 0
     }));
 
     res.json({

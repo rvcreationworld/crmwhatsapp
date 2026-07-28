@@ -111,6 +111,7 @@ const LastActivity = () => {
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Untouched Bot Leads</th>
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Ringing Leads</th>
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Call Back Leads</th>
+                  <th className="p-4 border-b border-slate-200 dark:border-slate-700">Hot Leads</th>
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Last Call Time</th>
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Last Call Gap</th>
                   <th className="p-4 border-b border-slate-200 dark:border-slate-700">Total Calls</th>
@@ -163,6 +164,15 @@ const LastActivity = () => {
                             : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
                         }`}>
                           {t.callback_leads_count} Call Back
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${
+                          t.hot_leads_count > 0 
+                            ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20' 
+                            : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                        }`}>
+                          {t.hot_leads_count} Hot
                         </span>
                       </td>
                       <td className="p-4 text-slate-600 dark:text-slate-400">
