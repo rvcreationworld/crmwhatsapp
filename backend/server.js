@@ -70,6 +70,7 @@ app.use("/api/search", require("./routes/searchRoutes"));
 app.use("/api/admin/greetings", require("./routes/adminGreetingRoutes"));
 app.use("/api/telecaller/greetings", require("./routes/telecallerGreetingRoutes"));
 app.use("/api/interakt", require("./routes/interaktRoutes"));
+app.use("/api/hub", require("./routes/hubRoutes"));
 app.use("/api/whatsapp-center", require("./routes/whatsappCenterRoutes"));
 
 // Health Route

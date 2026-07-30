@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { sendSessionMessage } = require('./interaktService');
+const { sendSessionMessage } = require('./hubService');
 const { assignChatToAgent } = require('./interaktAssignmentService');
 const { syncLeadTraits } = require('./interaktTraitSyncService');
 const { renderServiceMessage } = require('./whatsappServiceMessageService');

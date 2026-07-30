@@ -7,7 +7,7 @@ const {
     sendAudioMessage,
     sendInteractiveButtonMessage,
     sendInteractiveListMessage
-} = require('./interaktService');
+} = require('./hubService');
 
 /**
  * Queues automations for a specific trigger non-blockingly.

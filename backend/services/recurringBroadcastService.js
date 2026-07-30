@@ -170,11 +170,11 @@ const processRecurringBroadcasts = async () => {
                 try {
                     // 2. Fetch unique eligible conversations (24h window open)
                     const [allConversations] = await connection.query(`
-                        SELECT id as conversation_id, lead_id, lead_table, lead_type, telecaller_id, phone_number, normalized_number, last_customer_message_at
+                        SELECT id as conversation_id, lead_id, lead_table, lead_type, telecaller_id, phone_number, normalized_number, service_window_expires_at
                         FROM whatsapp_conversations
-                        WHERE last_customer_message_at IS NOT NULL
-                        AND last_customer_message_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
-                        ORDER BY last_customer_message_at DESC
+                        WHERE service_window_expires_at IS NOT NULL
+                        AND service_window_expires_at > NOW()
+                        ORDER BY service_window_expires_at DESC
                     `);
 
                     // Deduplicate in memory by normalized_number
@@ -210,14 +210,15 @@ const processRecurringBroadcasts = async () => {
                                     phone_number, normalized_number, scheduled_at, service_window_expires_at, variables_json,
                                     automation_name_snapshot, message_type_snapshot, text_message_snapshot, media_url_snapshot, 
                                     media_name_snapshot, button_payload_snapshot, list_payload_snapshot, status
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), DATE_ADD(?, INTERVAL 24 HOUR), ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')
                             `, [
                                 -1, // Use -1 or null for automation_id since it's recurring broadcast
                                 `${execKey}:${conv.normalized_number}`, // Unique event key per recipient
                                 'RECURRING_BROADCAST', // queue source
                                 conv.lead_type, conv.lead_table, conv.lead_id, conv.telecaller_id,
                                 conv.phone_number, conv.normalized_number,
-                                conv.last_customer_message_at, // expires 24h after this
+                                conv.service_window_expires_at, // actual expiry time
+
                                 JSON.stringify(vars),
                                 broadcast.broadcast_name,
                                 broadcast.message_type,

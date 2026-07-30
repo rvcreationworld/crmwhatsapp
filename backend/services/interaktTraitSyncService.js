@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { trackUser } = require('./interaktService');
+const { trackUser } = require('./hubService');
 
 /**
  * Synchronizes lead traits (name and assigned RM) with Interakt Contact Profiles.

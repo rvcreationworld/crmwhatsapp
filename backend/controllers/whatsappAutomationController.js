@@ -2,7 +2,7 @@ const db = require('../config/db');
 const { 
     sendSessionMessage, sendImageMessage, sendVideoMessage, sendDocumentMessage, sendAudioMessage, 
     sendInteractiveButtonMessage, sendInteractiveListMessage 
-} = require('../services/interaktService');
+} = require('../services/hubService');
 
 exports.getAutomations = async (req, res) => {
     try {

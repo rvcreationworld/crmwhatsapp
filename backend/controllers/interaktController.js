@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { sendSessionMessage, sendTemplateMessage } = require('../services/interaktService');
+const { sendSessionMessage, sendTemplateMessage } = require('../services/hubService');
 const { renderServiceMessage } = require('../services/whatsappServiceMessageService');
 const { queueAutomations } = require('../services/automationQueueService');
 
