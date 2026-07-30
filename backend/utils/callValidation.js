@@ -25,6 +25,15 @@ async function validateCallPulseStatusRequirement({
     return { allowed: true };
   }
 
+  // Check if telecaller is globally bypassed
+  const [telecallerRow] = await db.query(
+    "SELECT callpulse_rules_bypassed FROM telecaller_master WHERE id = ?",
+    [telecallerId]
+  );
+  if (telecallerRow.length > 0 && telecallerRow[0].callpulse_rules_bypassed === 1) {
+    return { allowed: true };
+  }
+
   const status = statusValue.trim();
 
   // Categorize status

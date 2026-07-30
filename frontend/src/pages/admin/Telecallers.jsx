@@ -29,6 +29,7 @@ const Telecallers = () => {
     password: "",
     is_active: 1,
     own_campaign_enabled: 0,
+    callpulse_rules_bypassed: 0,
     interakt_agent_email: "",
     interakt_agent_status: "NOT_REGISTERED",
     interakt_last_verified_at: null
@@ -118,7 +119,8 @@ const Telecallers = () => {
       tele_mobile: t.tele_mobile,
       password: "",
       is_active: t.is_active,
-      own_campaign_enabled: t.own_campaign_enabled,
+      own_campaign_enabled: t.own_campaign_enabled || 0,
+      callpulse_rules_bypassed: t.callpulse_rules_bypassed || 0,
       interakt_agent_email: t.interakt_agent_email || "",
       interakt_agent_status: t.interakt_agent_status || "NOT_REGISTERED",
       interakt_last_verified_at: t.interakt_last_verified_at || null
@@ -293,6 +295,18 @@ const Telecallers = () => {
                 />
                 <label htmlFor="campaign_toggle" className="text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
                   Allow Personal Meta Campaign Leads
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <input 
+                  type="checkbox" id="bypass_callpulse_toggle"
+                  checked={formData.callpulse_rules_bypassed === 1}
+                  onChange={e => setFormData({...formData, callpulse_rules_bypassed: e.target.checked ? 1 : 0})}
+                  className="w-4 h-4 text-blue-600 dark:bg-slate-800 border-gray-300 dark:border-slate-700 rounded focus:ring-blue-500/50"
+                />
+                <label htmlFor="bypass_callpulse_toggle" className="text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                  Bypass CallPulse Status Lock Rules
                 </label>
               </div>
 

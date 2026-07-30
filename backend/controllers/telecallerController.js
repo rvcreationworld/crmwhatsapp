@@ -10,7 +10,7 @@ exports.getAll = async (req, res) => {
 
     let countQuery = "SELECT COUNT(*) as count FROM telecaller_master WHERE is_deleted = 0";
     let countParams = [];
-    let dataQuery = "SELECT id, telecaller_name, tele_mobile, telegram_user_id, is_active, own_campaign_enabled, interakt_agent_email, interakt_agent_status, interakt_last_verified_at, created_at, phone_last10, last_verified, bot_leads_paused FROM telecaller_master WHERE is_deleted = 0";
+    let dataQuery = "SELECT id, telecaller_name, tele_mobile, telegram_user_id, is_active, own_campaign_enabled, interakt_agent_email, interakt_agent_status, interakt_last_verified_at, created_at, phone_last10, last_verified, bot_leads_paused, callpulse_rules_bypassed FROM telecaller_master WHERE is_deleted = 0";
     let dataParams = [];
 
     if (search) {
@@ -42,7 +42,7 @@ exports.getAll = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { telecaller_name, tele_mobile, password, is_active, own_campaign_enabled, interakt_agent_email, interakt_agent_status } = req.body;
+    const { telecaller_name, tele_mobile, password, is_active, own_campaign_enabled, interakt_agent_email, interakt_agent_status, callpulse_rules_bypassed } = req.body;
 
     if (!telecaller_name || !tele_mobile || !password) {
       return res.status(400).json({ success: false, message: "Name, mobile, and password are required." });
@@ -85,6 +85,7 @@ exports.create = async (req, res) => {
     }
     const active_status = is_active === undefined ? 1 : is_active;
     const own_campaign = own_campaign_enabled || 0;
+    const callpulse_bypassed = callpulse_rules_bypassed || 0;
 
     if (existing.length > 0) {
       const existingUser = existing[0];
@@ -94,7 +95,7 @@ exports.create = async (req, res) => {
         // Restore deleted user
         await db.query(
           `UPDATE telecaller_master 
-           SET telecaller_name = ?, tele_mobile = ?, password_hash = ?, is_active = ?, is_deleted = 0, own_campaign_enabled = COALESCE(own_campaign_enabled, 0) 
+           SET telecaller_name = ?, tele_mobile = ?, password_hash = ?, is_active = ?, is_deleted = 0, own_campaign_enabled = COALESCE(own_campaign_enabled, 0), callpulse_rules_bypassed = COALESCE(callpulse_rules_bypassed, 0) 
            WHERE id = ?`,
           [telecaller_name, tele_mobile, password_hash, active_status, existingUser.id]
         );
@@ -102,10 +103,9 @@ exports.create = async (req, res) => {
       }
     }
 
-    // Insert new
     const [result] = await db.query(
-      "INSERT INTO telecaller_master (telecaller_name, tele_mobile, password_hash, is_active, own_campaign_enabled, interakt_agent_email, interakt_agent_status, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, 0)",
-      [telecaller_name, tele_mobile, password_hash, active_status, own_campaign, finalEmail, finalStatus]
+      "INSERT INTO telecaller_master (telecaller_name, tele_mobile, password_hash, is_active, own_campaign_enabled, interakt_agent_email, interakt_agent_status, callpulse_rules_bypassed, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)",
+      [telecaller_name, tele_mobile, password_hash, active_status, own_campaign, finalEmail, finalStatus, callpulse_bypassed]
     );
 
     res.status(201).json({ success: true, message: "Telecaller created successfully", id: result.insertId });
@@ -118,7 +118,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const id = req.params.id;
-    const { telecaller_name, is_active, own_campaign_enabled, is_deleted, password, interakt_agent_email, interakt_agent_status } = req.body;
+    const { telecaller_name, is_active, own_campaign_enabled, is_deleted, password, interakt_agent_email, interakt_agent_status, callpulse_rules_bypassed } = req.body;
 
     let finalEmail = interakt_agent_email !== undefined ? (interakt_agent_email ? interakt_agent_email.trim().toLowerCase() : null) : undefined;
     let finalStatus = interakt_agent_status !== undefined ? interakt_agent_status : undefined;
@@ -193,8 +193,8 @@ exports.update = async (req, res) => {
       }
     }
 
-    let query = "UPDATE telecaller_master SET telecaller_name = COALESCE(?, telecaller_name), is_active = COALESCE(?, is_active), own_campaign_enabled = COALESCE(?, own_campaign_enabled), is_deleted = COALESCE(?, is_deleted)";
-    let params = [telecaller_name, is_active, own_campaign_enabled, is_deleted];
+    let query = "UPDATE telecaller_master SET telecaller_name = COALESCE(?, telecaller_name), is_active = COALESCE(?, is_active), own_campaign_enabled = COALESCE(?, own_campaign_enabled), is_deleted = COALESCE(?, is_deleted), callpulse_rules_bypassed = COALESCE(?, callpulse_rules_bypassed)";
+    let params = [telecaller_name, is_active, own_campaign_enabled, is_deleted, callpulse_rules_bypassed];
     
     if (finalEmail !== undefined) {
       query += ", interakt_agent_email = ?";
