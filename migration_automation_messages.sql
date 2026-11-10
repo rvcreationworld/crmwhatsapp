@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS crmpro_v2_whatsapp_test.whatsapp_automation_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    automation_name VARCHAR(150) NOT NULL,
+    description TEXT,
+    lead_type ENUM('DIRECT', 'BOT', 'BOTH') NOT NULL,
+    trigger_event VARCHAR(100) NOT NULL,
+    message_type ENUM('TEXT', 'IMAGE', 'VIDEO', 'DOCUMENT') NOT NULL,
+    media_url VARCHAR(500),
+    caption TEXT,
+    delay_value INT DEFAULT 0,
+    delay_unit ENUM('SECONDS', 'MINUTES', 'HOURS', 'DAYS') DEFAULT 'SECONDS',
+    execution_order INT DEFAULT 1,
+    send_once BOOLEAN DEFAULT TRUE,
+    status ENUM('Draft', 'Active', 'Paused') DEFAULT 'Draft',
+    audience_filter VARCHAR(100),
+    next_execution_at TIMESTAMP NULL,
+    created_by INT,
+    updated_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_trigger (trigger_event),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

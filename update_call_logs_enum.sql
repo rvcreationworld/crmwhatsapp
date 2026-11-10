@@ -1,0 +1,1 @@
+ALTER TABLE `callpulse_call_logs` MODIFY COLUMN `lead_type` ENUM('BOT', 'DIRECT', 'FREE', 'TRANSFERRED', 'UNKNOWN') DEFAULT 'UNKNOWN';

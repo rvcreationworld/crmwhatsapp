@@ -1,0 +1,76 @@
+# Environment & Secrets (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist
+firebase-adminsdk*.json
+
+# Huge Data & Media Uploads
+uploads/
+backend/uploads/
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.mp3
+*.wav
+*.binlog_extract.txt
+binlog_extract.txt
+
+# Binary Archives / JDK / Gradle
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.jar
+*.so
+*.dll
+*.dylib
+jdk*
+
+# Dependencies
+node_modules/
+bower_components/
+vendor/
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# Build Outputs & Bundles
+build/
+dist/
+out/
+bin/
+obj/
+*.apk
+*.aab
+*.ipa
+*.pkg
+*.dmg
+
+# Flutter & Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# Android / iOS / IDEs
+.gradle/
+.gradle_home/
+caches/
+local.properties
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Existing ignores

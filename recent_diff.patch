@@ -1,0 +1,128 @@
+diff -r -u -x node_modules /Users/aniket/Downloads/crmwhatsapp-github/backend/.env /Users/aniket/Downloads/crmwhatsapp/backend/.env
+--- /Users/aniket/Downloads/crmwhatsapp-github/backend/.env	2026-07-18 20:44:48
++++ /Users/aniket/Downloads/crmwhatsapp/backend/.env	2026-07-29 20:34:11
+@@ -22,3 +22,8 @@
+ WHATSAPP_QUEUE_PROCESSOR_ENABLED=true
+ WHATSAPP_AUTOMATION_PROCESSOR_ENABLED=true
+ WHATSAPP_AUTOMATION_PROCESSOR_INTERVAL_SECONDS=30
++
++# Communication Hub API Configuration
++COMM_HUB_API_URL=http://localhost:5001/api/v1/messages/send
++COMM_HUB_API_KEY=key_a07e1c23a5589602ddf2f4eb484441f4
++COMM_HUB_API_SECRET=sec_f32263556958e4d11685207a4479960f95f99171465271f0140c4e119dc7cb9f
+Only in /Users/aniket/Downloads/crmwhatsapp/backend/controllers: hubWebhookController.js
+diff -r -u -x node_modules /Users/aniket/Downloads/crmwhatsapp-github/backend/controllers/interaktController.js /Users/aniket/Downloads/crmwhatsapp/backend/controllers/interaktController.js
+--- /Users/aniket/Downloads/crmwhatsapp-github/backend/controllers/interaktController.js	2026-07-18 01:57:07
++++ /Users/aniket/Downloads/crmwhatsapp/backend/controllers/interaktController.js	2026-07-29 20:36:22
+@@ -1,5 +1,5 @@
+ const db = require('../config/db');
+-const { sendSessionMessage, sendTemplateMessage } = require('../services/interaktService');
++const { sendSessionMessage, sendTemplateMessage } = require('../services/hubService');
+ const { renderServiceMessage } = require('../services/whatsappServiceMessageService');
+ const { queueAutomations } = require('../services/automationQueueService');
+ 
+diff -r -u -x node_modules /Users/aniket/Downloads/crmwhatsapp-github/backend/controllers/whatsappAutomationController.js /Users/aniket/Downloads/crmwhatsapp/backend/controllers/whatsappAutomationController.js
+--- /Users/aniket/Downloads/crmwhatsapp-github/backend/controllers/whatsappAutomationController.js	2026-07-18 01:11:59
++++ /Users/aniket/Downloads/crmwhatsapp/backend/controllers/whatsappAutomationController.js	2026-07-29 20:36:16
+@@ -2,7 +2,7 @@
+ const { 
+     sendSessionMessage, sendImageMessage, sendVideoMessage, sendDocumentMessage, sendAudioMessage, 
+     sendInteractiveButtonMessage, sendInteractiveListMessage 
+-} = require('../services/interaktService');
++} = require('../services/hubService');
+ 
+ exports.getAutomations = async (req, res) => {
+     try {
+Only in /Users/aniket/Downloads/crmwhatsapp/backend/routes: hubRoutes.js
+diff -r -u -x node_modules /Users/aniket/Downloads/crmwhatsapp-github/backend/server.js /Users/aniket/Downloads/crmwhatsapp/backend/server.js
+--- /Users/aniket/Downloads/crmwhatsapp-github/backend/server.js	2026-07-28 21:46:24
++++ /Users/aniket/Downloads/crmwhatsapp/backend/server.js	2026-07-29 21:39:34
+@@ -70,6 +70,7 @@
+ app.use("/api/admin/greetings", require("./routes/adminGreetingRoutes"));
+ app.use("/api/telecaller/greetings", require("./routes/telecallerGreetingRoutes"));
+ app.use("/api/interakt", require("./routes/interaktRoutes"));
++app.use("/api/hub", require("./routes/hubRoutes"));
+ app.use("/api/whatsapp-center", require("./routes/whatsappCenterRoutes"));
+ 
+ // Health Route
+diff -r -u -x node_modules /Users/aniket/Downloads/crmwhatsapp-github/backend/services/automationQueueService.js /Users/aniket/Downloads/crmwhatsapp/backend/services/automationQueueService.js
+--- /Users/aniket/Downloads/crmwhatsapp-github/backend/services/automationQueueService.js	2026-07-18 01:05:39
++++ /Users/aniket/Downloads/crmwhatsapp/backend/services/automationQueueService.js	2026-07-29 20:35:52
+@@ -7,7 +7,7 @@
+     sendAudioMessage,
+     sendInteractiveButtonMessage,
+     sendInteractiveListMessage
+-} = require('./interaktService');
++} = require('./hubService');
+ 
+ /**
+  * Queues automations for a specific trigger non-blockingly.
+diff -r -u -x node_modules /Users/aniket/Downloads/crmwhatsapp-github/backend/services/botQueueProcessor.js /Users/aniket/Downloads/crmwhatsapp/backend/services/botQueueProcessor.js
+--- /Users/aniket/Downloads/crmwhatsapp-github/backend/services/botQueueProcessor.js	2026-07-18 09:27:51
++++ /Users/aniket/Downloads/crmwhatsapp/backend/services/botQueueProcessor.js	2026-07-29 20:35:31
+@@ -1,5 +1,5 @@
+ const db = require('../config/db');
+-const { sendSessionMessage } = require('./interaktService');
++const { sendSessionMessage } = require('./hubService');
+ const { assignChatToAgent } = require('./interaktAssignmentService');
+ const { syncLeadTraits } = require('./interaktTraitSyncService');
+ const { renderServiceMessage } = require('./whatsappServiceMessageService');
+Only in /Users/aniket/Downloads/crmwhatsapp/backend/services: hubService.js
+diff -r -u -x node_modules /Users/aniket/Downloads/crmwhatsapp-github/backend/services/interaktTraitSyncService.js /Users/aniket/Downloads/crmwhatsapp/backend/services/interaktTraitSyncService.js
+--- /Users/aniket/Downloads/crmwhatsapp-github/backend/services/interaktTraitSyncService.js	2026-07-17 16:05:25
++++ /Users/aniket/Downloads/crmwhatsapp/backend/services/interaktTraitSyncService.js	2026-07-29 20:36:04
+@@ -1,5 +1,5 @@
+ const db = require('../config/db');
+-const { trackUser } = require('./interaktService');
++const { trackUser } = require('./hubService');
+ 
+ /**
+  * Synchronizes lead traits (name and assigned RM) with Interakt Contact Profiles.
+diff -r -u -x node_modules /Users/aniket/Downloads/crmwhatsapp-github/backend/services/recurringBroadcastService.js /Users/aniket/Downloads/crmwhatsapp/backend/services/recurringBroadcastService.js
+--- /Users/aniket/Downloads/crmwhatsapp-github/backend/services/recurringBroadcastService.js	2026-07-18 08:06:23
++++ /Users/aniket/Downloads/crmwhatsapp/backend/services/recurringBroadcastService.js	2026-07-29 22:24:57
+@@ -170,11 +170,11 @@
+                 try {
+                     // 2. Fetch unique eligible conversations (24h window open)
+                     const [allConversations] = await connection.query(`
+-                        SELECT id as conversation_id, lead_id, lead_table, lead_type, telecaller_id, phone_number, normalized_number, last_customer_message_at
++                        SELECT id as conversation_id, lead_id, lead_table, lead_type, telecaller_id, phone_number, normalized_number, service_window_expires_at
+                         FROM whatsapp_conversations
+-                        WHERE last_customer_message_at IS NOT NULL
+-                        AND last_customer_message_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
+-                        ORDER BY last_customer_message_at DESC
++                        WHERE service_window_expires_at IS NOT NULL
++                        AND service_window_expires_at > NOW()
++                        ORDER BY service_window_expires_at DESC
+                     `);
+ 
+                     // Deduplicate in memory by normalized_number
+@@ -210,14 +210,15 @@
+                                     phone_number, normalized_number, scheduled_at, service_window_expires_at, variables_json,
+                                     automation_name_snapshot, message_type_snapshot, text_message_snapshot, media_url_snapshot, 
+                                     media_name_snapshot, button_payload_snapshot, list_payload_snapshot, status
+-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), DATE_ADD(?, INTERVAL 24 HOUR), ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')
++                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')
+                             `, [
+                                 -1, // Use -1 or null for automation_id since it's recurring broadcast
+                                 `${execKey}:${conv.normalized_number}`, // Unique event key per recipient
+                                 'RECURRING_BROADCAST', // queue source
+                                 conv.lead_type, conv.lead_table, conv.lead_id, conv.telecaller_id,
+                                 conv.phone_number, conv.normalized_number,
+-                                conv.last_customer_message_at, // expires 24h after this
++                                conv.service_window_expires_at, // actual expiry time
++
+                                 JSON.stringify(vars),
+                                 broadcast.broadcast_name,
+                                 broadcast.message_type,
+diff -r -u -x node_modules /Users/aniket/Downloads/crmwhatsapp-github/backend/services/whatsappQueueProcessor.js /Users/aniket/Downloads/crmwhatsapp/backend/services/whatsappQueueProcessor.js
+--- /Users/aniket/Downloads/crmwhatsapp-github/backend/services/whatsappQueueProcessor.js	2026-07-15 01:22:03
++++ /Users/aniket/Downloads/crmwhatsapp/backend/services/whatsappQueueProcessor.js	2026-07-29 20:35:18
+@@ -1,5 +1,5 @@
+ const db = require('../config/db');
+-const { sendTemplateMessage } = require('./interaktService');
++const { sendTemplateMessage } = require('./hubService');
+ const { queueAutomations } = require('./automationQueueService');
+ const { getAssignedTemplate } = require('./whatsappTemplateService');
+ const { renderTemplateVariables } = require('./templateResolverService');
+Only in /Users/aniket/Downloads/crmwhatsapp/backend: test_hub_outbound.js

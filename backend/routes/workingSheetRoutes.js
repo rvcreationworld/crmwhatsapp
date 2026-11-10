@@ -1,0 +1,1 @@
+const express = require("express"); const router = express.Router(); const leadController = require("../controllers/leadController"); const { authMiddleware } = require("../middleware/authMiddleware"); router.get("/", authMiddleware, leadController.getWorkingSheet); router.put("/:id/telecaller-update", authMiddleware, leadController.telecallerUpdate); module.exports = router;
